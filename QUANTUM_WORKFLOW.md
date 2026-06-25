@@ -84,6 +84,7 @@ conda run -n qfdia_ibm_latest python scripts/ibm_quantum_preflight.py \
 
 If credentials and a hardware backend are available, the preflight JSON includes
 `ready_for_hardware: true` and a recommended `sbatch` command.
+The current hardware-readiness note is tracked in `IBM_HARDWARE_READINESS.md`.
 
 If a token is ever printed in terminal output or logs, rotate/recreate that IBM
 API key before submitting a real hardware job. The preflight script is designed
