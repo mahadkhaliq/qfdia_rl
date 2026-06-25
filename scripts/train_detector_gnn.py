@@ -1,7 +1,7 @@
 """
 Train graph neural FDIA detector baselines on QGrid-Synth and Ruan CAISO.
 
-This is a lightweight pure-PyTorch GCN baseline. It uses the grid topology from:
+This is a lightweight pure-PyTorch GCN/GAT baseline. It uses the grid topology from:
   - Pandapower Ybus for QGrid-Synth IEEE 30/57/118 systems
   - Ruan/STGDL admittance matrices for Ruan CAISO 30/118 systems
 
@@ -152,9 +152,81 @@ class GCNDetector(nn.Module):
         return self.head(graph).squeeze(1)
 
 
+class GraphAttentionLayer(nn.Module):
+    def __init__(
+        self,
+        in_dim: int,
+        out_dim: int,
+        heads: int = 4,
+        concat: bool = True,
+        dropout: float = 0.2,
+        negative_slope: float = 0.2,
+    ):
+        super().__init__()
+        self.heads = heads
+        self.out_dim = out_dim
+        self.concat = concat
+        self.linear = nn.Linear(in_dim, heads * out_dim, bias=False)
+        self.attn_src = nn.Parameter(torch.empty(heads, out_dim))
+        self.attn_dst = nn.Parameter(torch.empty(heads, out_dim))
+        bias_dim = heads * out_dim if concat else out_dim
+        self.bias = nn.Parameter(torch.zeros(bias_dim))
+        self.dropout = nn.Dropout(dropout)
+        self.leaky_relu = nn.LeakyReLU(negative_slope)
+        nn.init.xavier_uniform_(self.linear.weight)
+        nn.init.xavier_uniform_(self.attn_src)
+        nn.init.xavier_uniform_(self.attn_dst)
+
+    def forward(self, x: torch.Tensor, adj: torch.Tensor) -> torch.Tensor:
+        batch, nodes, _ = x.shape
+        h = self.linear(x).view(batch, nodes, self.heads, self.out_dim)
+        h = h.permute(0, 2, 1, 3)  # (batch, heads, nodes, out_dim)
+        src = (h * self.attn_src.view(1, self.heads, 1, self.out_dim)).sum(dim=-1)
+        dst = (h * self.attn_dst.view(1, self.heads, 1, self.out_dim)).sum(dim=-1)
+        scores = self.leaky_relu(src.unsqueeze(-1) + dst.unsqueeze(-2))
+        mask = adj > 0
+        scores = scores.masked_fill(~mask.view(1, 1, nodes, nodes), torch.finfo(scores.dtype).min)
+        alpha = torch.softmax(scores, dim=-1)
+        alpha = self.dropout(alpha)
+        out = torch.matmul(alpha, h)
+        if self.concat:
+            out = out.permute(0, 2, 1, 3).reshape(batch, nodes, self.heads * self.out_dim)
+        else:
+            out = out.mean(dim=1)
+        return out + self.bias
+
+
+class GATDetector(nn.Module):
+    def __init__(self, in_dim: int, hidden_dim: int = 64, heads: int = 4, dropout: float = 0.2):
+        super().__init__()
+        head_dim = hidden_dim // heads
+        self.attn1 = GraphAttentionLayer(in_dim, head_dim, heads=heads, concat=True, dropout=dropout)
+        self.attn2 = GraphAttentionLayer(hidden_dim, head_dim, heads=heads, concat=True, dropout=dropout)
+        self.norm1 = nn.LayerNorm(hidden_dim)
+        self.norm2 = nn.LayerNorm(hidden_dim)
+        self.dropout = nn.Dropout(dropout)
+        self.head = nn.Sequential(
+            nn.Linear(2 * hidden_dim, hidden_dim),
+            nn.ReLU(),
+            nn.Dropout(dropout),
+            nn.Linear(hidden_dim, 1),
+        )
+
+    def forward(self, x: torch.Tensor, adj: torch.Tensor) -> torch.Tensor:
+        x = torch.relu(self.norm1(self.attn1(x, adj)))
+        x = self.dropout(x)
+        x = torch.relu(self.norm2(self.attn2(x, adj)))
+        mean_pool = x.mean(dim=1)
+        max_pool = x.max(dim=1).values
+        graph = torch.cat([mean_pool, max_pool], dim=1)
+        return self.head(graph).squeeze(1)
+
+
 def make_model(name: str, feature_dim: int) -> nn.Module:
     if name == "gcn":
         return GCNDetector(feature_dim)
+    if name == "gat":
+        return GATDetector(feature_dim)
     raise ValueError(f"unknown model {name}")
 
 
@@ -358,7 +430,7 @@ def main():
     ap.add_argument("--data", required=True)
     ap.add_argument("--dataset", choices=["qgrid", "ruan"], required=True)
     ap.add_argument("--bus", type=int, required=True)
-    ap.add_argument("--model", choices=["gcn"], default="gcn")
+    ap.add_argument("--model", choices=["gcn", "gat"], default="gcn")
     ap.add_argument("--max-samples", type=int, default=50000)
     ap.add_argument("--batch-size", type=int, default=512)
     ap.add_argument("--epochs", type=int, default=10)
