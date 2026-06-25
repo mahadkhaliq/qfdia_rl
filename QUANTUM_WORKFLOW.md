@@ -74,6 +74,17 @@ This writes:
 runs/quantum_architectures/quantum_stack_versions.json
 ```
 
+Check IBM Runtime account/backend readiness without exposing tokens:
+
+```bash
+conda run -n qfdia_ibm_latest python scripts/ibm_quantum_preflight.py \
+  --min-qubits 4 \
+  --out runs/quantum_architectures/ibm_preflight.json
+```
+
+If credentials and a hardware backend are available, the preflight JSON includes
+`ready_for_hardware: true` and a recommended `sbatch` command.
+
 ## Generate Architecture Artifacts
 
 ```bash

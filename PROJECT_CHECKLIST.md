@@ -60,6 +60,7 @@ This checklist keeps the detector-comparison track and the quantum RL/IBM track 
 - [x] Keep real QPU work as inference/verification first; full QNPG training on queued hardware is not practical.
 - [x] Add clean IBM/Qiskit environment setup script for latest IBM hardware verification.
 - [x] Add quantum stack checker and Hellbender verification Slurm wrapper.
+- [x] Add IBM Runtime account/backend preflight checker that does not expose API tokens.
 
 ## 6. Permissions / Operations
 
