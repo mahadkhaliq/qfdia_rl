@@ -22,6 +22,9 @@ POLICY="${POLICY:-runs/policies/qnpg_${BUS}_policy.npz}"
 OUT_DIR="${OUT_DIR:-runs/quantum_architectures}"
 IBM_BACKEND="${IBM_BACKEND:-}"
 FAKE_BACKEND="${FAKE_BACKEND:-FakeKolkataV2}"
+RESULT_TAG="${RESULT_TAG:-${SLURM_JOB_ID:-$(date -u +%Y%m%dT%H%M%SZ)}}"
+OUT_FILE="${OUT_FILE:-${OUT_DIR}/verify_${DEVICE}_${BUS}_${RESULT_TAG}.json}"
+LATEST_FILE="${OUT_DIR}/verify_${DEVICE}_${BUS}.json"
 
 mkdir -p runs/logs "$OUT_DIR"
 
@@ -33,8 +36,6 @@ if [[ "$DEVICE" == "aer_noisy" ]]; then
   EXTRA_ARGS+=(--fake-backend "$FAKE_BACKEND")
 fi
 
-OUT_FILE="${OUT_DIR}/verify_${DEVICE}_${BUS}.json"
-
 echo "Running IBM verification"
 echo "  BUS=$BUS"
 echo "  DEVICE=$DEVICE"
@@ -42,7 +43,9 @@ echo "  SHOTS=$SHOTS"
 echo "  N_POINTS=$N_POINTS"
 echo "  ENV_NAME=$ENV_NAME"
 echo "  POLICY=$POLICY"
+echo "  RESULT_TAG=$RESULT_TAG"
 echo "  OUT_FILE=$OUT_FILE"
+echo "  LATEST_FILE=$LATEST_FILE"
 
 conda run -n "$ENV_NAME" python verify_ibm.py \
   --bus "$BUS" \
@@ -52,3 +55,6 @@ conda run -n "$ENV_NAME" python verify_ibm.py \
   --shots "$SHOTS" \
   --out "$OUT_FILE" \
   "${EXTRA_ARGS[@]}"
+
+cp "$OUT_FILE" "$LATEST_FILE"
+echo "  copied latest verification metrics to $LATEST_FILE"

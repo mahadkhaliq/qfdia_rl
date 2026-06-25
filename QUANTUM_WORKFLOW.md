@@ -90,6 +90,25 @@ If a token is ever printed in terminal output or logs, rotate/recreate that IBM
 API key before submitting a real hardware job. The preflight script is designed
 to write only `token: <hidden>` in its JSON report.
 
+Create a token-free verification manifest before submitting hardware work:
+
+```bash
+python scripts/ibm_verification_manifest.py \
+  --preflight runs/quantum_architectures/ibm_preflight_synthgrad.json \
+  --env-name qfdia_ibm_latest \
+  --shots 1024 \
+  --n-points 4
+```
+
+This writes:
+
+```text
+runs/quantum_architectures/ibm_verification_manifest.json
+IBM_VERIFICATION_MANIFEST.md
+```
+
+The manifest records existing simulator/Aer/noisy-Aer verification, selected backend, exact Slurm command, expected output JSON, and the token-rotation safety gate.
+
 ## Generate Architecture Artifacts
 
 ```bash
@@ -179,7 +198,13 @@ runs/logs/ibm_verify_<jobid>.out
 runs/logs/ibm_verify_<jobid>.err
 ```
 
-and metrics to:
+and tagged metrics to:
+
+```text
+runs/quantum_architectures/verify_<device>_<bus>_<result_tag_or_jobid>.json
+```
+
+It also refreshes the latest-result alias:
 
 ```text
 runs/quantum_architectures/verify_<device>_<bus>.json
@@ -206,6 +231,21 @@ qubits: 4
 quantum layers: 2
 selected nodes: [3, 5, 9, 11]
 reduced edges: [(0, 1), (0, 3), (1, 2)]
+```
+
+The current stronger Ruan 30-bus reduced QGNN uses:
+
+```text
+variant: enhanced6 / enhanced6_balacc
+qubits: 6
+quantum layers: 2
+node selection: hybrid topology + label-shift
+feature mode: raw_plus_diffused
+selected nodes: [3, 5, 9, 11, 14, 26]
+reduced edges: [(0, 1), (0, 3), (1, 2), (3, 4)]
+encoding: raw selected node features + graph-diffused features -> tanh linear encoder -> RY angles
+entanglers: CNOT gates on reduced physical topology
+readout: PauliZ expectations on all qubits -> classical binary head
 ```
 
 Compare QGNN against CNN, MLP, GCN, W-GCN, and GAT using the same detector metrics. Treat this as a proof of equivalent quantum detector architecture first; performance tuning should come after threshold calibration and richer reduced-node selection.

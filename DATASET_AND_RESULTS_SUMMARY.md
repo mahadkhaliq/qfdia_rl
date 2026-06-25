@@ -38,13 +38,13 @@ Slurm/session log
 
 ## Current Test F1 Summary
 
-| Dataset/System | 1D-CNN | MLP | GCN | W-GCN | GAT | QGNN-pilot | QGNN-cal | QGNN-enh4 | QGNN-enh6 |
-|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| QGrid-Synth 30-bus | 0.9772 | 0.9699 | 0.8711 | 0.9493 | 0.8904 | 0.7262 | 0.7550 | - | - |
-| QGrid-Synth 57-bus | 0.8923 | 0.8506 | 0.5325 | 0.7356 | 0.7636 | - | - | - | - |
-| QGrid-Synth 118-bus | 0.8229 | 0.8158 | 0.6380 | 0.5247 | 0.5923 | - | - | - | - |
-| Ruan CAISO 30-bus | 0.9963 | 0.9961 | 0.8687 | 0.9542 | 0.9033 | 0.6777 | 0.6820 | 0.6768 | 0.7530 |
-| Ruan CAISO 118-bus | 0.9890 | 0.9842 | 0.7294 | 0.8474 | 0.8256 | - | - | - | - |
+| Dataset/System | 1D-CNN | MLP | GCN | W-GCN | GAT | QGNN-pilot | QGNN-cal | QGNN-enh4 | QGNN-enh6 | QGNN-enh6-BA |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| QGrid-Synth 30-bus | 0.9772 | 0.9699 | 0.8711 | 0.9493 | 0.8904 | 0.7262 | 0.7550 | - | - | - |
+| QGrid-Synth 57-bus | 0.8923 | 0.8506 | 0.5325 | 0.7356 | 0.7636 | - | - | - | - | - |
+| QGrid-Synth 118-bus | 0.8229 | 0.8158 | 0.6380 | 0.5247 | 0.5923 | - | - | - | - | - |
+| Ruan CAISO 30-bus | 0.9963 | 0.9961 | 0.8687 | 0.9542 | 0.9033 | 0.6777 | 0.6820 | 0.6768 | 0.7530 | 0.7530 |
+| Ruan CAISO 118-bus | 0.9890 | 0.9842 | 0.7294 | 0.8474 | 0.8256 | - | - | - | - | - |
 
 QGNN pilot settings:
 
@@ -67,6 +67,7 @@ QGNN pilot, calibrated, and enhanced metrics:
 | Ruan CAISO 30-bus, QGNN-cal | 0.5175 | 0.5000 | 0.5175 | 1.0000 | 0.6820 | 0.5214 | 0.6055 | 7.3027 |
 | Ruan CAISO 30-bus, QGNN-enh4 | 0.5200 | 0.5036 | 0.5194 | 0.9710 | 0.6768 | 0.6689 | 0.7508 | 6.6204 |
 | Ruan CAISO 30-bus, QGNN-enh6 | 0.7950 | 0.8019 | 1.0000 | 0.6039 | 0.7530 | 0.7039 | 0.8211 | 10.9661 |
+| Ruan CAISO 30-bus, QGNN-enh6-BA | 0.7950 | 0.8019 | 1.0000 | 0.6039 | 0.7530 | 0.7039 | 0.8211 | 10.7415 |
 
 QGrid residual-aware/oracle ablation:
 
@@ -82,7 +83,7 @@ The 1D-CNN is currently the strongest deployable detector. MLP is competitive on
 
 The QGrid `+|a|` ablation is an oracle/residual-aware upper bound: performance is nearly perfect because the synthetic attack magnitude is supplied. This is useful for paper analysis, but should be clearly separated from deployable detectors unless a realistic residual estimator supplies an equivalent signal.
 
-The reduced QGNN pilot is useful as a quantum architecture proof, not yet as a winning detector. On QGrid-Synth 30-bus it learns a meaningful decision boundary, and validation threshold calibration improves F1 from 0.7262 to 0.7550. On Ruan CAISO 30-bus, the original 4-qubit calibrated model over-flags, while the enhanced 6-qubit hybrid node-selection model improves F1 to 0.7530 and reduces FPR to 0.0. A post-hoc threshold sweep on the enhanced 6-qubit model improves recall from 0.6039 to 0.6135 at FPR <= 0.05, so the remaining limitation is model separability rather than threshold choice alone.
+The reduced QGNN pilot is useful as a quantum architecture proof, not yet as a winning detector. On QGrid-Synth 30-bus it learns a meaningful decision boundary, and validation threshold calibration improves F1 from 0.7262 to 0.7550. On Ruan CAISO 30-bus, the original 4-qubit calibrated model over-flags, while the enhanced 6-qubit hybrid node-selection model improves F1 to 0.7530 and reduces FPR to 0.0. The balanced-accuracy-labeled enhanced run records the same threshold-selected operating point with slightly lower measured latency. A post-hoc threshold sweep on the enhanced 6-qubit model improves recall from 0.6039 to 0.6135 at FPR <= 0.05, so the remaining limitation is model separability rather than threshold choice alone.
 
 ## Plot Artifacts
 
@@ -90,6 +91,19 @@ Paper-writing summary:
 
 ```text
 PAPER_RESULTS.md
+paper_tables/*.csv
+```
+
+Paper-ready plots:
+
+```text
+runs/plots/paper/*.png
+```
+
+Consistency check:
+
+```bash
+python scripts/verify_results_consistency.py
 ```
 
 Combined plots:

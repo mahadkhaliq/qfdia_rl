@@ -251,7 +251,9 @@ def write_registry(path: Path, qnpg: list[dict], qgnn_runs: list[dict]):
             f.write(f"- {step}\n")
         f.write("\n## Notes\n\n")
         f.write("- `QGNN-cal` uses a validation-selected threshold; `QGNN-pilot` uses the original thresholding path.\n")
-        f.write("- Current QGNN runs are 4-qubit reduced detectors, not full 30/57/118-bus quantum models.\n")
+        widths = sorted({int(item["n_qubits"]) for item in qgnn_runs if item.get("n_qubits")})
+        width_label = "/".join(str(width) for width in widths) if widths else "reduced-width"
+        f.write(f"- Current QGNN runs are {width_label}-qubit reduced detectors, not full 30/57/118-bus quantum models.\n")
         f.write("- Real IBM execution should start with inference/verification snapshots, not full training loops.\n")
 
 

@@ -23,6 +23,7 @@ python scripts/quantum_architecture_summary.py
 | `ruan30_qgnn_calibrated` | ruan IEEE 30-bus | calibrated | topology | diffused | 4 | 2 | 2 | 24 | 157 | 0.4776 | 0.6820 | 0.5214 | 0.6055 |
 | `ruan30_qgnn_enhanced4` | ruan IEEE 30-bus | enhanced4 | label_shift | raw_plus_diffused | 4 | 2 | 4 | 24 | 189 | 0.4231 | 0.6768 | 0.6689 | 0.7508 |
 | `ruan30_qgnn_enhanced6` | ruan IEEE 30-bus | enhanced6 | hybrid | raw_plus_diffused | 6 | 2 | 4 | 36 | 315 | 0.4446 | 0.7530 | 0.7039 | 0.8211 |
+| `ruan30_qgnn_enhanced6_balacc` | ruan IEEE 30-bus | enhanced6_balacc | hybrid | raw_plus_diffused | 6 | 2 | 4 | 36 | 315 | 0.4446 | 0.7530 | 0.7039 | 0.8211 |
 | `ruan30_qgnn_pilot` | ruan IEEE 30-bus | pilot | topology | diffused | 4 | 2 | 2 | 24 | 157 | - | 0.6777 | 0.5338 | 0.6154 |
 
 ## QGNN Circuit Pattern

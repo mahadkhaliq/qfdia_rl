@@ -18,6 +18,7 @@ This checklist keeps the detector-comparison track and the quantum RL/IBM track 
 - [x] Generate combined comparison plots.
 - [x] Generate individual metric plots and individual learning-curve plots.
 - [x] Generate per-system and per-bus comparison plots alongside the combined plots.
+- [x] Add a result consistency verifier for metrics tables, paper plots, and architecture-backed QGNN rows.
 
 ## 3. Graph Detector Baselines
 
@@ -61,6 +62,8 @@ This checklist keeps the detector-comparison track and the quantum RL/IBM track 
 - [x] Add clean IBM/Qiskit environment setup script for latest IBM hardware verification.
 - [x] Add quantum stack checker and Hellbender verification Slurm wrapper.
 - [x] Add IBM Runtime account/backend preflight checker that does not expose API tokens.
+- [x] Add token-free IBM verification manifest with existing simulator/Aer/noisy results and planned hardware smoke-test command.
+- [x] Add token-free IBM verification manifest with planned backend command and safety gate.
 
 ## 6. Permissions / Operations
 
