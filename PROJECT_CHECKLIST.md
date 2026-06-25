@@ -65,6 +65,7 @@ This checklist keeps the detector-comparison track and the quantum RL/IBM track 
 - [x] Add token-free IBM verification manifest with existing simulator/Aer/noisy results and planned hardware smoke-test command.
 - [x] Add paper-ready quantum verification results table with completed simulator/Aer/noisy rows and planned IBM row.
 - [x] Add local `qfdia_plot` conda environment and reporting script so plots/tables are generated on the Mac, not on the Hellbender login node.
+- [x] Add Hellbender Slurm readiness wrapper so IBM preflight/manifest checks do not run on the login node.
 
 ## 6. Permissions / Operations
 

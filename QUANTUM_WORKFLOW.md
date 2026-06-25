@@ -47,6 +47,16 @@ On Hellbender:
 
 ```bash
 cd ~/qfdia_rl_git
+```
+
+Do not run Python or conda-heavy work on the Hellbender login node. Use Open
+OnDemand, an interactive Slurm allocation, or an `sbatch` wrapper. Login-node
+use should be limited to lightweight file checks and job submission commands.
+
+Inside an interactive allocation or Open OnDemand session, create/update the
+IBM environment with:
+
+```bash
 bash scripts/setup_ibm_quantum_env.sh
 ```
 
@@ -65,7 +75,7 @@ ENV_NAME=qfdia_ibm_2026 bash scripts/setup_ibm_quantum_env.sh
 Check the active quantum stack:
 
 ```bash
-conda run -n qfdia_ibm_latest python scripts/check_quantum_stack.py
+sbatch scripts/run_ibm_readiness_hellbender.sbatch
 ```
 
 This writes:
@@ -74,12 +84,12 @@ This writes:
 runs/quantum_architectures/quantum_stack_versions.json
 ```
 
-Check IBM Runtime account/backend readiness without exposing tokens:
+The same Slurm readiness job also checks IBM Runtime account/backend readiness
+without exposing tokens:
 
 ```bash
-conda run -n qfdia_ibm_latest python scripts/ibm_quantum_preflight.py \
-  --min-qubits 4 \
-  --out runs/quantum_architectures/ibm_preflight.json
+ENV_NAME=qfdia_ibm_latest MIN_QUBITS=4 SHOTS=1024 N_POINTS=4 \
+  sbatch scripts/run_ibm_readiness_hellbender.sbatch
 ```
 
 If credentials and a hardware backend are available, the preflight JSON includes
@@ -90,7 +100,8 @@ If a token is ever printed in terminal output or logs, rotate/recreate that IBM
 API key before submitting a real hardware job. The preflight script is designed
 to write only `token: <hidden>` in its JSON report.
 
-Create a token-free verification manifest before submitting hardware work:
+The readiness job creates a token-free verification manifest before hardware
+submission. To run only this logic inside an existing allocation, use:
 
 ```bash
 python scripts/ibm_verification_manifest.py \
@@ -109,7 +120,8 @@ IBM_VERIFICATION_MANIFEST.md
 
 The manifest records existing simulator/Aer/noisy-Aer verification, selected backend, exact Slurm command, expected output JSON, and the token-rotation safety gate.
 
-Export the paper-ready quantum verification table:
+Export the paper-ready quantum verification table locally or inside an existing
+allocation:
 
 ```bash
 python scripts/export_quantum_verification_results.py
