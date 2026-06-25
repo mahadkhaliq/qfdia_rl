@@ -23,7 +23,7 @@ This checklist keeps the detector-comparison track and the quantum RL/IBM track 
 - [x] Train topology-aware GCN on the same five datasets.
 - [x] Train masked graph-attention GAT on the same five datasets.
 - [x] Include graph model architecture summaries with node count, edge count, feature dimension, and parameter count.
-- [ ] Add edge-weighted graph model using admittance magnitude instead of binary topology only.
+- [x] Add edge-weighted graph model using admittance magnitude instead of binary topology only.
 - [ ] Add ablation: raw `z` node features vs `z + |a|` or residual-aware features where labels permit.
 
 ## 4. QGNN Detector Track
@@ -51,7 +51,7 @@ This checklist keeps the detector-comparison track and the quantum RL/IBM track 
   - [ ] selected IBM backend.
 - [x] Log IBM verification metadata:
   backend, shots, qubits, logical circuit depth, device result, simulator result, stealth, SDS, flagged rate.
-- [ ] Keep real QPU work as inference/verification first; full QNPG training on queued hardware is not practical.
+- [x] Keep real QPU work as inference/verification first; full QNPG training on queued hardware is not practical.
 - [x] Add clean IBM/Qiskit environment setup script for latest IBM hardware verification.
 - [x] Add quantum stack checker and Hellbender verification Slurm wrapper.
 
