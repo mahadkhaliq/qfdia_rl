@@ -91,3 +91,17 @@ Individual learning curves:
 ```text
 runs/plots/learning_curves/*.png
 ```
+
+Focused per-system plots:
+
+```text
+runs/plots/by_system/*_metrics.png
+runs/plots/by_system/*_learning.png
+```
+
+Focused per-bus plots:
+
+```text
+runs/plots/by_bus/*_metrics.png
+runs/plots/by_bus/*_learning.png
+```

@@ -80,6 +80,76 @@ def qgnn_detector_templates() -> list[dict]:
     ]
 
 
+def load_json(path: Path) -> dict:
+    with open(path) as f:
+        return json.load(f)
+
+
+def qgnn_run_variant(run_name: str) -> str:
+    if "calibrated" in run_name:
+        return "calibrated"
+    if "pilot" in run_name:
+        return "pilot"
+    return "run"
+
+
+def collect_qgnn_runs(detectors_root: Path) -> list[dict]:
+    runs = []
+    for arch_path in sorted(detectors_root.glob("*qgnn*/architecture.json")):
+        run_dir = arch_path.parent
+        arch = load_json(arch_path)
+        metrics_path = run_dir / "metrics.json"
+        config_path = run_dir / "config.json"
+        metrics = load_json(metrics_path) if metrics_path.exists() else {}
+        config = load_json(config_path) if config_path.exists() else {}
+        q_layers = int(arch.get("q_layers", config.get("q_layers", 0)))
+        n_qubits = int(arch.get("n_qubits", config.get("n_qubits", 0)))
+        quantum_weight_shape = arch.get("quantum_weight_shape", [q_layers, n_qubits, 3])
+        quantum_parameters = arch.get("quantum_parameters", int(np.prod(quantum_weight_shape)))
+        runs.append(
+            {
+                "run": run_dir.name,
+                "variant": qgnn_run_variant(run_dir.name),
+                "dataset": arch.get("dataset", config.get("dataset")),
+                "bus": arch.get("bus", config.get("bus")),
+                "n_qubits": n_qubits,
+                "q_layers": q_layers,
+                "q_device": arch.get("q_device", config.get("q_device")),
+                "diff_method": arch.get("diff_method", config.get("diff_method")),
+                "selected_nodes": arch.get("selected_nodes", config.get("selected_nodes", [])),
+                "reduced_edges": arch.get("reduced_edges", config.get("reduced_edges", [])),
+                "node_feature_dim": arch.get("node_feature_dim", config.get("node_feature_dim")),
+                "adjacency_mode": arch.get("adjacency_mode", config.get("adjacency_mode")),
+                "encoding": arch.get("encoding"),
+                "circuit_sequence": arch.get(
+                    "circuit_sequence",
+                    [
+                        "RY(pi * encoded_feature_i) on each selected-node qubit",
+                        "CNOT entanglers over reduced physical topology",
+                        "Rot(phi, theta, omega) trainable layer on each qubit",
+                        "PauliZ expectation readout on every qubit",
+                    ],
+                ),
+                "entangler": arch.get("entangler"),
+                "readout": arch.get("readout"),
+                "quantum_weight_shape": quantum_weight_shape,
+                "quantum_parameters": int(quantum_parameters),
+                "total_parameters": arch.get("total_parameters", config.get("total_parameters")),
+                "trainable_parameters": arch.get("trainable_parameters", config.get("trainable_parameters")),
+                "threshold": metrics.get("threshold", config.get("calibrated_threshold")),
+                "f1": metrics.get("f1"),
+                "auroc": metrics.get("auroc"),
+                "auprc": metrics.get("auprc"),
+                "fpr": metrics.get("fpr"),
+                "fnr": metrics.get("fnr"),
+                "latency_ms_per_sample": metrics.get("latency_ms_per_sample"),
+                "metrics_path": str(metrics_path),
+                "architecture_path": str(arch_path),
+            }
+        )
+    return runs
+
+
 def write_qnpg_circuit_drawings(out_dir: Path, summaries: list[dict]):
     for item in summaries:
         bus = item["bus"]
@@ -95,7 +165,15 @@ def write_qnpg_circuit_drawings(out_dir: Path, summaries: list[dict]):
             f.write("\n")
 
 
-def write_markdown(out_dir: Path, qnpg: list[dict], qgnn: list[dict]):
+def fmt(value, digits: int = 4) -> str:
+    if value is None:
+        return "-"
+    if isinstance(value, float):
+        return f"{value:.{digits}f}"
+    return str(value)
+
+
+def write_markdown(out_dir: Path, qnpg: list[dict], qgnn: list[dict], qgnn_runs: list[dict]):
     with open(out_dir / "quantum_architecture_summary.md", "w") as f:
         f.write("# Quantum Architecture Summary\n\n")
         f.write("## Q-NPG-FDIA VQC Actor\n\n")
@@ -113,23 +191,79 @@ def write_markdown(out_dir: Path, qnpg: list[dict], qgnn: list[dict]):
             for key in ["purpose", "encoding", "graph_operator", "readout", "first_target", "verification"]:
                 f.write(f"- {key.replace('_', ' ').title()}: {item[key]}\n")
             f.write("\n")
+        if qgnn_runs:
+            f.write("## Completed QGNN Detector Runs\n\n")
+            for item in qgnn_runs:
+                f.write(f"### {item['run']}\n\n")
+                f.write(f"- Dataset/System: {item['dataset']} IEEE {item['bus']}-bus\n")
+                f.write(f"- Variant: {item['variant']}\n")
+                f.write(f"- Qubits/Layers: {item['n_qubits']} qubits, {item['q_layers']} quantum layers\n")
+                f.write(f"- Quantum parameters: {item['quantum_parameters']} with shape {item['quantum_weight_shape']}\n")
+                f.write(f"- Total trainable parameters: {item['trainable_parameters']}\n")
+                f.write(f"- Selected nodes: {item['selected_nodes']}\n")
+                f.write(f"- Reduced edges: {item['reduced_edges']}\n")
+                f.write(f"- Encoding: {item['encoding']}\n")
+                f.write(f"- Entangler: {item['entangler']}\n")
+                f.write(f"- Readout: {item['readout']}\n")
+                f.write(f"- Metrics: F1={fmt(item['f1'])}, AUROC={fmt(item['auroc'])}, AUPRC={fmt(item['auprc'])}, FPR={fmt(item['fpr'])}, FNR={fmt(item['fnr'])}\n\n")
+
+
+def write_registry(path: Path, qnpg: list[dict], qgnn_runs: list[dict]):
+    with open(path, "w") as f:
+        f.write("# Quantum Architecture Registry\n\n")
+        f.write("This file records the quantum architectures used or proposed in the FDIA comparison workflow. Regenerate it with:\n\n")
+        f.write("```bash\npython scripts/quantum_architecture_summary.py\n```\n\n")
+        f.write("## Q-NPG-FDIA VQC Actor\n\n")
+        f.write("| System | Qubits | VQC Layers | Ansatz | Encoding | Readout | Quantum Params |\n")
+        f.write("|---|---:|---:|---|---|---|---:|\n")
+        for item in qnpg:
+            f.write(
+                f"| IEEE {item['bus']}-bus | {item['n_qubits']} | {item['vqc_layers']} | "
+                f"{item['ansatz']} | {item['encoding']} | {item['readout']} | {item['theta_parameters']} |\n"
+            )
+        f.write("\n## Completed QGNN Detector Architectures\n\n")
+        if not qgnn_runs:
+            f.write("No completed QGNN detector runs were found under `runs/detectors`.\n")
+            return
+        f.write("| Run | Dataset/System | Variant | Qubits | Layers | Node Features | Quantum Params | Total Params | Threshold | F1 | AUROC | AUPRC |\n")
+        f.write("|---|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|\n")
+        for item in qgnn_runs:
+            f.write(
+                f"| `{item['run']}` | {item['dataset']} IEEE {item['bus']}-bus | {item['variant']} | "
+                f"{item['n_qubits']} | {item['q_layers']} | {item['node_feature_dim']} | "
+                f"{item['quantum_parameters']} | {item['trainable_parameters']} | {fmt(item['threshold'])} | "
+                f"{fmt(item['f1'])} | {fmt(item['auroc'])} | {fmt(item['auprc'])} |\n"
+            )
+        f.write("\n## QGNN Circuit Pattern\n\n")
+        first = qgnn_runs[0]
+        for step in first["circuit_sequence"]:
+            f.write(f"- {step}\n")
+        f.write("\n## Notes\n\n")
+        f.write("- `QGNN-cal` uses a validation-selected threshold; `QGNN-pilot` uses the original thresholding path.\n")
+        f.write("- Current QGNN runs are 4-qubit reduced detectors, not full 30/57/118-bus quantum models.\n")
+        f.write("- Real IBM execution should start with inference/verification snapshots, not full training loops.\n")
 
 
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--out-dir", default="runs/quantum_architectures")
+    ap.add_argument("--detectors-root", default="runs/detectors")
+    ap.add_argument("--registry-out", default="QUANTUM_ARCHITECTURE_REGISTRY.md")
     args = ap.parse_args()
     out_dir = Path(args.out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
 
     qnpg = [qnpg_summary(bus) for bus in [30, 57, 118]]
     qgnn = qgnn_detector_templates()
-    payload = {"qnpg_vqc_actor": qnpg, "qgnn_detector_templates": qgnn}
+    qgnn_runs = collect_qgnn_runs(Path(args.detectors_root))
+    payload = {"qnpg_vqc_actor": qnpg, "qgnn_detector_templates": qgnn, "completed_qgnn_runs": qgnn_runs}
     with open(out_dir / "quantum_architecture_summary.json", "w") as f:
         json.dump(payload, f, indent=2)
     write_qnpg_circuit_drawings(out_dir, qnpg)
-    write_markdown(out_dir, qnpg, qgnn)
+    write_markdown(out_dir, qnpg, qgnn, qgnn_runs)
+    write_registry(Path(args.registry_out), qnpg, qgnn_runs)
     print(f"wrote quantum architecture summaries to {out_dir}")
+    print(f"wrote quantum architecture registry to {args.registry_out}")
 
 
 if __name__ == "__main__":

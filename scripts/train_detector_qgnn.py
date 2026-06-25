@@ -221,6 +221,10 @@ def parameter_counts(model: nn.Module) -> dict[str, int]:
     return {"total_parameters": int(total), "trainable_parameters": int(trainable)}
 
 
+def module_parameter_count(module: nn.Module) -> int:
+    return int(sum(p.numel() for p in module.parameters()))
+
+
 def write_architecture_summary(
     model: ReducedQGNNDetector,
     cfg: RunConfig,
@@ -228,6 +232,7 @@ def write_architecture_summary(
     edges: list[tuple[int, int]],
     out_dir: Path,
 ):
+    quantum_weight_shape = [cfg.q_layers, cfg.n_qubits, 3]
     summary = {
         "model": "qgnn",
         "dataset": cfg.dataset,
@@ -241,8 +246,19 @@ def write_architecture_summary(
         "node_feature_dim": model.node_feature_dim,
         "adjacency_mode": cfg.adjacency_mode,
         "encoding": "graph-diffused selected node features -> tanh linear encoder -> RY angles",
+        "circuit_sequence": [
+            "RY(pi * encoded_feature_i) on each selected-node qubit",
+            "CNOT entanglers over reduced physical topology",
+            "for each quantum layer: Rot(phi, theta, omega) on every qubit",
+            "for each quantum layer: repeat CNOT entanglers over reduced physical topology",
+            "measure PauliZ expectation on every qubit",
+        ],
         "entangler": "CNOT gates on reduced physical topology, ring fallback if disconnected",
         "readout": "PauliZ expectations on all qubits -> classical binary head",
+        "quantum_weight_shape": quantum_weight_shape,
+        "quantum_parameters": int(np.prod(quantum_weight_shape)),
+        "classical_encoder_parameters": module_parameter_count(model.encoder),
+        "classical_head_parameters": module_parameter_count(model.head),
         **parameter_counts(model),
         "architecture": repr(model),
     }
@@ -261,6 +277,10 @@ def write_architecture_summary(
             "reduced_edges",
             "node_feature_dim",
             "adjacency_mode",
+            "quantum_weight_shape",
+            "quantum_parameters",
+            "classical_encoder_parameters",
+            "classical_head_parameters",
             "total_parameters",
             "trainable_parameters",
             "encoding",
@@ -268,6 +288,9 @@ def write_architecture_summary(
             "readout",
         ]:
             f.write(f"{key}: {summary[key]}\n")
+        f.write("circuit_sequence:\n")
+        for step in summary["circuit_sequence"]:
+            f.write(f"- {step}\n")
         f.write("\n")
         f.write(summary["architecture"])
         f.write("\n")

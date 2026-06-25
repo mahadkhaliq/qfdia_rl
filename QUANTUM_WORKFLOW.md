@@ -89,6 +89,7 @@ runs/quantum_architectures/quantum_architecture_summary.md
 runs/quantum_architectures/qnpg_vqc_30_bus_circuit.txt
 runs/quantum_architectures/qnpg_vqc_57_bus_circuit.txt
 runs/quantum_architectures/qnpg_vqc_118_bus_circuit.txt
+QUANTUM_ARCHITECTURE_REGISTRY.md
 ```
 
 ## Verification Order

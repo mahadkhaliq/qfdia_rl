@@ -17,6 +17,7 @@ This checklist keeps the detector-comparison track and the quantum RL/IBM track 
 - [x] Log `config.json`, `history.csv`, `metrics.json`, `model.pt`, `architecture.json`, and `architecture.txt`.
 - [x] Generate combined comparison plots.
 - [x] Generate individual metric plots and individual learning-curve plots.
+- [x] Generate per-system and per-bus comparison plots alongside the combined plots.
 
 ## 3. Graph Detector Baselines
 
@@ -47,6 +48,7 @@ This checklist keeps the detector-comparison track and the quantum RL/IBM track 
 - [x] Existing QNPG trainer uses QFIM/natural-gradient update for `theta_q`.
 - [x] Existing `verify_ibm.py` supports simulator, Aer, noisy Aer, and IBM hardware verification.
 - [x] Generate explicit quantum circuit architecture summaries for each bus.
+- [x] Keep a root-level quantum architecture registry with completed QGNN variants and Q-NPG VQC presets.
 - [ ] Verify trained policies with:
   - [x] noiseless simulator,
   - [x] Qiskit Aer,
