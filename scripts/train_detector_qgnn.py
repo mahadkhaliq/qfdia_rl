@@ -63,6 +63,7 @@ class RunConfig:
     q_layers: int
     q_device: str
     diff_method: str
+    threshold_metric: str
     adjacency: str
     adjacency_mode: str
 
@@ -273,7 +274,7 @@ def write_architecture_summary(
     return summary
 
 
-def evaluate(model, loader, device):
+def collect_probabilities(model, loader, device):
     model.eval()
     probs, labels = [], []
     t0 = time.perf_counter()
@@ -283,9 +284,11 @@ def evaluate(model, loader, device):
             probs.append(torch.sigmoid(logits).cpu().numpy())
             labels.append(yb.numpy())
     elapsed = time.perf_counter() - t0
-    p = np.concatenate(probs)
-    y = np.concatenate(labels)
-    pred = (p >= 0.5).astype(np.int64)
+    return np.concatenate(labels), np.concatenate(probs), elapsed
+
+
+def metrics_from_probabilities(y: np.ndarray, p: np.ndarray, threshold: float, elapsed: float):
+    pred = (p >= threshold).astype(np.int64)
     tn, fp, fn, tp = confusion_matrix(y, pred, labels=[0, 1]).ravel()
     return {
         "accuracy": accuracy_score(y, pred),
@@ -300,7 +303,35 @@ def evaluate(model, loader, device):
         "auprc": average_precision_score(y, p) if len(np.unique(y)) == 2 else float("nan"),
         "latency_ms_per_sample": 1000.0 * elapsed / max(len(y), 1),
         "n": int(len(y)),
+        "threshold": float(threshold),
     }
+
+
+def select_threshold(y: np.ndarray, p: np.ndarray, metric: str):
+    candidates = np.unique(np.concatenate(([0.5], p.astype(np.float64))))
+    best_threshold = 0.5
+    best_metrics = metrics_from_probabilities(y, p, best_threshold, elapsed=0.0)
+    best_score = float(best_metrics[metric])
+    best_tie = float(best_metrics["mcc"])
+    for threshold in candidates:
+        metrics = metrics_from_probabilities(y, p, float(threshold), elapsed=0.0)
+        score = float(metrics[metric])
+        tie = float(metrics["mcc"])
+        if score > best_score or (score == best_score and tie > best_tie):
+            best_threshold = float(threshold)
+            best_metrics = metrics
+            best_score = score
+            best_tie = tie
+    return best_threshold, best_metrics
+
+
+def evaluate(model, loader, device, threshold=None, threshold_metric: str = "f1"):
+    y, p, elapsed = collect_probabilities(model, loader, device)
+    if threshold is None:
+        threshold, metrics = select_threshold(y, p, threshold_metric)
+        metrics["latency_ms_per_sample"] = 1000.0 * elapsed / max(len(y), 1)
+        return metrics
+    return metrics_from_probabilities(y, p, threshold, elapsed)
 
 
 def train(cfg: RunConfig, out_dir: Path):
@@ -384,7 +415,7 @@ def train(cfg: RunConfig, out_dir: Path):
             loss.backward()
             opt.step()
             losses.append(float(loss.detach().cpu()))
-        val = evaluate(model, val_loader, device)
+        val = evaluate(model, val_loader, device, threshold=None, threshold_metric=cfg.threshold_metric)
         rec = {"epoch": epoch, "train_loss": float(np.mean(losses)), **{f"val_{k}": v for k, v in val.items()}}
         history.append(rec)
         with open(history_path, "w", newline="") as f:
@@ -402,7 +433,9 @@ def train(cfg: RunConfig, out_dir: Path):
 
     if best_state is not None:
         model.load_state_dict(best_state)
-    test = evaluate(model, test_loader, device)
+    val_final = evaluate(model, val_loader, device, threshold=None, threshold_metric=cfg.threshold_metric)
+    calibrated_threshold = float(val_final["threshold"])
+    test = evaluate(model, test_loader, device, threshold=calibrated_threshold, threshold_metric=cfg.threshold_metric)
     with open(out_dir / "config.json", "w") as f:
         json.dump(
             {
@@ -414,6 +447,8 @@ def train(cfg: RunConfig, out_dir: Path):
                 "device": str(device),
                 "total_parameters": arch["total_parameters"],
                 "trainable_parameters": arch["trainable_parameters"],
+                "threshold_calibration": cfg.threshold_metric,
+                "calibrated_threshold": calibrated_threshold,
             },
             f,
             indent=2,
@@ -451,6 +486,7 @@ def main():
     ap.add_argument("--q-layers", type=int, default=2)
     ap.add_argument("--q-device", default="default.qubit")
     ap.add_argument("--diff-method", default="backprop")
+    ap.add_argument("--threshold-metric", choices=["f1", "balanced_accuracy", "mcc"], default="f1")
     ap.add_argument("--adjacency", default="external/ruan_fdia")
     ap.add_argument("--adjacency-mode", choices=["binary", "weighted"], default="weighted")
     ap.add_argument("--out", default=None)
