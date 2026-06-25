@@ -108,7 +108,7 @@ def main():
     run_config = load_json(run_dir / "config.json")
     cfg_fields = RunConfig.__dataclass_fields__.keys()
     cfg = RunConfig(**{key: run_config[key] for key in cfg_fields})
-    checkpoint = torch.load(run_dir / "model.pt", map_location="cpu")
+    checkpoint = torch.load(run_dir / "model.pt", map_location="cpu", weights_only=False)
 
     x_test, y_test = reconstruct_test_data(cfg, run_config, checkpoint)
     model = ReducedQGNNDetector(
