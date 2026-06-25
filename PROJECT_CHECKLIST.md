@@ -25,7 +25,7 @@ This checklist keeps the detector-comparison track and the quantum RL/IBM track 
 - [x] Train masked graph-attention GAT on the same five datasets.
 - [x] Include graph model architecture summaries with node count, edge count, feature dimension, and parameter count.
 - [x] Add edge-weighted graph model using admittance magnitude instead of binary topology only.
-- [ ] Add ablation: raw `z` node features vs `z + |a|` or residual-aware features where labels permit.
+- [x] Add ablation: raw `z` node features vs `z + |a|` or residual-aware features where labels permit.
 
 ## 4. QGNN Detector Track
 

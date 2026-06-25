@@ -10,9 +10,9 @@ python scripts/export_paper_results.py
 
 | Dataset/System | Best Model | F1 | AUROC | AUPRC | FPR | FNR |
 | --- | --- | --- | --- | --- | --- | --- |
-| QGrid-Synth 118-bus | 1D-CNN | 0.8229 | 0.8967 | 0.9229 | 0.1005 | 0.2307 |
-| QGrid-Synth 30-bus | 1D-CNN | 0.9772 | 0.9964 | 0.9971 | 0.0110 | 0.0341 |
-| QGrid-Synth 57-bus | 1D-CNN | 0.8923 | 0.9529 | 0.9646 | 0.0543 | 0.1507 |
+| QGrid-Synth 118-bus | 1D-CNN+\|a\| | 1.0000 | 1.0000 | 1.0000 | 0.0000 | 0.0000 |
+| QGrid-Synth 30-bus | 1D-CNN+\|a\| | 0.9999 | 1.0000 | 1.0000 | 0.0000 | 0.0001 |
+| QGrid-Synth 57-bus | 1D-CNN+\|a\| | 0.9998 | 1.0000 | 1.0000 | 0.0000 | 0.0005 |
 | Ruan CAISO 118-bus | 1D-CNN | 0.9890 | 0.9994 | 0.9995 | 0.0000 | 0.0218 |
 | Ruan CAISO 30-bus | 1D-CNN | 0.9963 | 0.9979 | 0.9986 | 0.0000 | 0.0074 |
 
@@ -23,7 +23,9 @@ python scripts/export_paper_results.py
 | Dataset/System | Model | F1 | Balanced Acc. | Precision | Recall | MCC | AUROC | AUPRC |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | QGrid-Synth 30-bus | 1D-CNN | 0.9772 | 0.9775 | 0.9888 | 0.9659 | 0.9552 | 0.9964 | 0.9971 |
+| QGrid-Synth 30-bus | 1D-CNN+\|a\| | 0.9999 | 0.9999 | 1.0000 | 0.9999 | 0.9999 | 1.0000 | 1.0000 |
 | QGrid-Synth 30-bus | MLP | 0.9699 | 0.9700 | 0.9719 | 0.9680 | 0.9399 | 0.9952 | 0.9960 |
+| QGrid-Synth 30-bus | MLP+\|a\| | 0.9998 | 0.9998 | 1.0000 | 0.9996 | 0.9996 | 1.0000 | 1.0000 |
 | QGrid-Synth 30-bus | GCN | 0.8711 | 0.8852 | 0.9933 | 0.7757 | 0.7896 | 0.9660 | 0.9739 |
 | QGrid-Synth 30-bus | W-GCN | 0.9493 | 0.9512 | 0.9864 | 0.9149 | 0.9047 | 0.9865 | 0.9897 |
 | QGrid-Synth 30-bus | GAT | 0.8904 | 0.9012 | 1.0000 | 0.8025 | 0.8186 | 0.9864 | 0.9898 |
@@ -44,7 +46,9 @@ python scripts/export_paper_results.py
 | Dataset/System | Model | F1 | Balanced Acc. | Precision | Recall | MCC | AUROC | AUPRC |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | QGrid-Synth 57-bus | 1D-CNN | 0.8923 | 0.8975 | 0.9400 | 0.8493 | 0.7988 | 0.9529 | 0.9646 |
+| QGrid-Synth 57-bus | 1D-CNN+\|a\| | 0.9998 | 0.9998 | 1.0000 | 0.9995 | 0.9995 | 1.0000 | 1.0000 |
 | QGrid-Synth 57-bus | MLP | 0.8506 | 0.8629 | 0.9347 | 0.7804 | 0.7360 | 0.9175 | 0.9407 |
+| QGrid-Synth 57-bus | MLP+\|a\| | 0.9995 | 0.9995 | 1.0000 | 0.9990 | 0.9990 | 1.0000 | 1.0000 |
 | QGrid-Synth 57-bus | GCN | 0.5325 | 0.6799 | 0.9867 | 0.3646 | 0.4634 | 0.7774 | 0.8303 |
 | QGrid-Synth 57-bus | W-GCN | 0.7356 | 0.7862 | 0.9640 | 0.5947 | 0.6197 | 0.8680 | 0.9008 |
 | QGrid-Synth 57-bus | GAT | 0.7636 | 0.8070 | 0.9849 | 0.6235 | 0.6600 | 0.8714 | 0.9084 |
@@ -54,7 +58,9 @@ python scripts/export_paper_results.py
 | Dataset/System | Model | F1 | Balanced Acc. | Precision | Recall | MCC | AUROC | AUPRC |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | QGrid-Synth 118-bus | 1D-CNN | 0.8229 | 0.8344 | 0.8845 | 0.7693 | 0.6745 | 0.8967 | 0.9229 |
+| QGrid-Synth 118-bus | 1D-CNN+\|a\| | 1.0000 | 1.0000 | 1.0000 | 1.0000 | 1.0000 | 1.0000 | 1.0000 |
 | QGrid-Synth 118-bus | MLP | 0.8158 | 0.8385 | 0.9493 | 0.7153 | 0.6986 | 0.8602 | 0.9056 |
+| QGrid-Synth 118-bus | MLP+\|a\| | 0.9872 | 0.9873 | 0.9997 | 0.9750 | 0.9750 | 0.9986 | 0.9989 |
 | QGrid-Synth 118-bus | GCN | 0.6380 | 0.7160 | 0.8797 | 0.5005 | 0.4788 | 0.7626 | 0.8180 |
 | QGrid-Synth 118-bus | W-GCN | 0.5247 | 0.6690 | 0.9299 | 0.3654 | 0.4252 | 0.7370 | 0.7900 |
 | QGrid-Synth 118-bus | GAT | 0.5923 | 0.6764 | 0.8002 | 0.4702 | 0.3873 | 0.7380 | 0.7821 |
@@ -69,19 +75,25 @@ python scripts/export_paper_results.py
 | Dataset/System | Model | F1 | AUROC | AUPRC | FPR | FNR | Latency ms/sample |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | QGrid-Synth 30-bus | 1D-CNN | 0.9772 | 0.9964 | 0.9971 | 0.0110 | 0.0341 | 0.0056 |
+| QGrid-Synth 30-bus | 1D-CNN+\|a\| | 0.9999 | 1.0000 | 1.0000 | 0.0000 | 0.0001 | 0.0058 |
 | QGrid-Synth 30-bus | MLP | 0.9699 | 0.9952 | 0.9960 | 0.0280 | 0.0320 | 0.0046 |
+| QGrid-Synth 30-bus | MLP+\|a\| | 0.9998 | 1.0000 | 1.0000 | 0.0000 | 0.0004 | 0.0049 |
 | QGrid-Synth 30-bus | GCN | 0.8711 | 0.9660 | 0.9739 | 0.0053 | 0.2243 | 0.0054 |
 | QGrid-Synth 30-bus | W-GCN | 0.9493 | 0.9865 | 0.9897 | 0.0126 | 0.0851 | 0.0055 |
 | QGrid-Synth 30-bus | GAT | 0.8904 | 0.9864 | 0.9898 | 0.0000 | 0.1975 | 0.0063 |
 | QGrid-Synth 30-bus | QGNN-pilot | 0.7262 | 0.8031 | 0.8604 | 0.0914 | 0.3793 | 7.4843 |
 | QGrid-Synth 30-bus | QGNN-cal | 0.7550 | 0.8031 | 0.8604 | 0.2335 | 0.2562 | 7.4620 |
 | QGrid-Synth 57-bus | 1D-CNN | 0.8923 | 0.9529 | 0.9646 | 0.0543 | 0.1507 | 0.0059 |
+| QGrid-Synth 57-bus | 1D-CNN+\|a\| | 0.9998 | 1.0000 | 1.0000 | 0.0000 | 0.0005 | 0.0077 |
 | QGrid-Synth 57-bus | MLP | 0.8506 | 0.9175 | 0.9407 | 0.0546 | 0.2196 | 0.0051 |
+| QGrid-Synth 57-bus | MLP+\|a\| | 0.9995 | 1.0000 | 1.0000 | 0.0000 | 0.0010 | 0.0059 |
 | QGrid-Synth 57-bus | GCN | 0.5325 | 0.7774 | 0.8303 | 0.0049 | 0.6354 | 0.0056 |
 | QGrid-Synth 57-bus | W-GCN | 0.7356 | 0.8680 | 0.9008 | 0.0222 | 0.4053 | 0.0057 |
 | QGrid-Synth 57-bus | GAT | 0.7636 | 0.8714 | 0.9084 | 0.0096 | 0.3765 | 0.0068 |
 | QGrid-Synth 118-bus | 1D-CNN | 0.8229 | 0.8967 | 0.9229 | 0.1005 | 0.2307 | 0.0067 |
+| QGrid-Synth 118-bus | 1D-CNN+\|a\| | 1.0000 | 1.0000 | 1.0000 | 0.0000 | 0.0000 | 0.0092 |
 | QGrid-Synth 118-bus | MLP | 0.8158 | 0.8602 | 0.9056 | 0.0382 | 0.2847 | 0.0057 |
+| QGrid-Synth 118-bus | MLP+\|a\| | 0.9872 | 0.9986 | 0.9989 | 0.0003 | 0.0250 | 0.0058 |
 | QGrid-Synth 118-bus | GCN | 0.6380 | 0.7626 | 0.8180 | 0.0684 | 0.4995 | 0.0064 |
 | QGrid-Synth 118-bus | W-GCN | 0.5247 | 0.7370 | 0.7900 | 0.0275 | 0.6346 | 0.0066 |
 | QGrid-Synth 118-bus | GAT | 0.5923 | 0.7380 | 0.7821 | 0.1174 | 0.5298 | 0.0112 |
@@ -131,6 +143,7 @@ python scripts/export_paper_results.py
 
 ## Metric Definitions For Paper
 
+- `+|a|` model labels denote QGrid-only oracle/residual-aware ablations using the synthetic attack vector magnitude.
 - F1: harmonic mean of precision and recall for attack detection.
 - AUROC: threshold-independent separability between normal and attack samples.
 - AUPRC: precision-recall area, useful when attack/normal ratios change.

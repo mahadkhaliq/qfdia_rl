@@ -22,6 +22,7 @@ All detector datasets use the shared binary schema with `label`, measurement vec
 | W-GCN | Physics-weighted graph baseline | GCN using normalized admittance magnitude as weighted adjacency. |
 | GAT | Graph attention baseline | Masked multi-head attention over physical grid neighbors. |
 | QGNN | Reduced quantum graph pilot | 4/6-qubit PennyLane quantum layer over selected nodes, with weighted reduced topology and classical binary head. |
+| `+\|a\|` ablation | Oracle/residual-aware synthetic upper bound | QGrid-only CNN/MLP runs using `z + \|a\|`; not a deployable feature set unless an equivalent residual estimate is available. |
 
 Each run logs:
 
@@ -67,9 +68,19 @@ QGNN pilot, calibrated, and enhanced metrics:
 | Ruan CAISO 30-bus, QGNN-enh4 | 0.5200 | 0.5036 | 0.5194 | 0.9710 | 0.6768 | 0.6689 | 0.7508 | 6.6204 |
 | Ruan CAISO 30-bus, QGNN-enh6 | 0.7950 | 0.8019 | 1.0000 | 0.6039 | 0.7530 | 0.7039 | 0.8211 | 10.9661 |
 
+QGrid residual-aware/oracle ablation:
+
+| Dataset/System | 1D-CNN+\|a\| F1 | MLP+\|a\| F1 | Note |
+|---|---:|---:|---|
+| QGrid-Synth 30-bus | 0.9999 | 0.9998 | Synthetic attack magnitude included as an upper-bound feature. |
+| QGrid-Synth 57-bus | 0.9998 | 0.9995 | Synthetic attack magnitude included as an upper-bound feature. |
+| QGrid-Synth 118-bus | 1.0000 | 0.9872 | Synthetic attack magnitude included as an upper-bound feature. |
+
 ## Interpretation
 
-The 1D-CNN is currently the strongest overall detector. MLP is competitive on easier cases and is faster. W-GCN shows that admittance weighting can greatly improve the graph baseline on QGrid-Synth 30-bus and both Ruan systems, but larger QGrid systems still lag CNN/MLP. GAT improves over plain GCN on several systems but is not consistently stronger than W-GCN.
+The 1D-CNN is currently the strongest deployable detector. MLP is competitive on easier cases and is faster. W-GCN shows that admittance weighting can greatly improve the graph baseline on QGrid-Synth 30-bus and both Ruan systems, but larger QGrid systems still lag CNN/MLP. GAT improves over plain GCN on several systems but is not consistently stronger than W-GCN.
+
+The QGrid `+|a|` ablation is an oracle/residual-aware upper bound: performance is nearly perfect because the synthetic attack magnitude is supplied. This is useful for paper analysis, but should be clearly separated from deployable detectors unless a realistic residual estimator supplies an equivalent signal.
 
 The reduced QGNN pilot is useful as a quantum architecture proof, not yet as a winning detector. On QGrid-Synth 30-bus it learns a meaningful decision boundary, and validation threshold calibration improves F1 from 0.7262 to 0.7550. On Ruan CAISO 30-bus, the original 4-qubit calibrated model over-flags, while the enhanced 6-qubit hybrid node-selection model improves F1 to 0.7530 and reduces FPR to 0.0. Its remaining weakness is recall, so the next QGNN step should tune the enhanced model for higher attack recall without losing the false-positive control.
 

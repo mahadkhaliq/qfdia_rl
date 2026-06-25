@@ -57,6 +57,10 @@ def fmt(value: Union[str, float], digits: int = 4) -> str:
     return f"{value:.{digits}f}"
 
 
+def md(value: str) -> str:
+    return value.replace("|", "\\|")
+
+
 def sort_rows(rows: list[dict[str, str]]) -> list[dict[str, str]]:
     return sorted(
         rows,
@@ -80,7 +84,7 @@ def write_overview_table(f, rows: list[dict[str, str]]):
     f.write(table_header(columns))
     for row in sort_rows(rows):
         f.write(
-            f"| {row['system_label']} | {row['model_name']} | {fmt(row['f1'])} | {fmt(row['auroc'])} | "
+            f"| {md(row['system_label'])} | {md(row['model_name'])} | {fmt(row['f1'])} | {fmt(row['auroc'])} | "
             f"{fmt(row['auprc'])} | {fmt(row['fpr'])} | {fmt(row['fnr'])} | {fmt(row['latency_ms_per_sample'])} |\n"
         )
     f.write("\n")
@@ -96,7 +100,7 @@ def write_best_by_system(f, rows: list[dict[str, str]]):
     for system in sorted(by_system):
         best = max(by_system[system], key=lambda r: as_float(r, "f1"))
         f.write(
-            f"| {system} | {best['model_name']} | {fmt(best['f1'])} | {fmt(best['auroc'])} | "
+            f"| {md(system)} | {md(best['model_name'])} | {fmt(best['f1'])} | {fmt(best['auroc'])} | "
             f"{fmt(best['auprc'])} | {fmt(best['fpr'])} | {fmt(best['fnr'])} |\n"
         )
     f.write("\n")
@@ -113,7 +117,7 @@ def write_by_bus_tables(f, rows: list[dict[str, str]]):
         f.write(table_header(columns))
         for row in sort_rows(by_bus[bus]):
             f.write(
-                f"| {row['system_label']} | {row['model_name']} | {fmt(row['f1'])} | "
+                f"| {md(row['system_label'])} | {md(row['model_name'])} | {fmt(row['f1'])} | "
                 f"{fmt(row['balanced_accuracy'])} | {fmt(row['precision'])} | {fmt(row['recall'])} | "
                 f"{fmt(row['mcc'])} | {fmt(row['auroc'])} | {fmt(row['auprc'])} |\n"
             )
