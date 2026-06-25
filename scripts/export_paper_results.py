@@ -137,6 +137,7 @@ def write_figure_index(f, plots_root: Path):
 
 def write_metric_definitions(f):
     f.write("## Metric Definitions For Paper\n\n")
+    f.write("- `+|a|` model labels denote QGrid-only oracle/residual-aware ablations using the synthetic attack vector magnitude.\n")
     f.write("- F1: harmonic mean of precision and recall for attack detection.\n")
     f.write("- AUROC: threshold-independent separability between normal and attack samples.\n")
     f.write("- AUPRC: precision-recall area, useful when attack/normal ratios change.\n")
