@@ -112,6 +112,19 @@ python scripts/export_paper_results.py
 | Ruan CAISO 118-bus | W-GCN | 0.8474 | 0.8927 | 0.9281 | 0.0528 | 0.2260 | 0.0062 |
 | Ruan CAISO 118-bus | GAT | 0.8256 | 0.9046 | 0.9363 | 0.0000 | 0.2969 | 0.0111 |
 
+## QGNN Threshold Sweep Summaries
+
+These rows report post-hoc threshold choices on saved QGNN test probabilities for recall/FPR tradeoff analysis.
+
+| Run | Criterion | Threshold | F1 | Balanced Acc. | Precision | Recall | FPR | FNR | MCC |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `ruan30_qgnn_enhanced6` | Best F1 | 0.4446 | 0.7568 | 0.8043 | 1.0000 | 0.6087 | 0.0000 | 0.3913 | 0.6548 |
+| `ruan30_qgnn_enhanced6` | Best Balanced Acc. | 0.4446 | 0.7568 | 0.8043 | 1.0000 | 0.6087 | 0.0000 | 0.3913 | 0.6548 |
+| `ruan30_qgnn_enhanced6` | Best MCC | 0.4446 | 0.7568 | 0.8043 | 1.0000 | 0.6087 | 0.0000 | 0.3913 | 0.6548 |
+| `ruan30_qgnn_enhanced6` | Best Recall @ FPR <= 0.05 | 0.4446 | 0.7405 | 0.7834 | 0.9338 | 0.6135 | 0.0466 | 0.3865 | 0.5980 |
+| `ruan30_qgnn_enhanced6` | Best Recall @ FPR <= 0.10 | 0.4446 | 0.7405 | 0.7834 | 0.9338 | 0.6135 | 0.0466 | 0.3865 | 0.5980 |
+| `ruan30_qgnn_enhanced6` | Best Recall @ FPR <= 0.20 | 0.4445 | 0.6957 | 0.7237 | 0.7950 | 0.6184 | 0.1710 | 0.3816 | 0.4558 |
+
 ## Figure Index
 
 ### Combined Figures

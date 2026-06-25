@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import json
 from collections import defaultdict
 from pathlib import Path
 from typing import Union
@@ -139,6 +140,38 @@ def write_figure_index(f, plots_root: Path):
     f.write("\n")
 
 
+def write_qgnn_threshold_sweeps(f, detectors_root: Path):
+    summaries = sorted(detectors_root.glob("*/threshold_sweep_summary.json"))
+    if not summaries:
+        return
+    f.write("## QGNN Threshold Sweep Summaries\n\n")
+    f.write("These rows report post-hoc threshold choices on saved QGNN test probabilities for recall/FPR tradeoff analysis.\n\n")
+    columns = ["Run", "Criterion", "Threshold", "F1", "Balanced Acc.", "Precision", "Recall", "FPR", "FNR", "MCC"]
+    f.write(table_header(columns))
+    keys = [
+        ("best_f1", "Best F1"),
+        ("best_balanced_accuracy", "Best Balanced Acc."),
+        ("best_mcc", "Best MCC"),
+        ("best_recall_at_fpr_0.05", "Best Recall @ FPR <= 0.05"),
+        ("best_recall_at_fpr_0.10", "Best Recall @ FPR <= 0.10"),
+        ("best_recall_at_fpr_0.20", "Best Recall @ FPR <= 0.20"),
+    ]
+    for path in summaries:
+        with open(path) as handle:
+            summary = json.load(handle)
+        run_name = Path(summary["run_dir"]).name
+        for key, label in keys:
+            row = summary.get(key)
+            if not row:
+                continue
+            f.write(
+                f"| `{md(run_name)}` | {label} | {fmt(row['threshold'])} | {fmt(row['f1'])} | "
+                f"{fmt(row['balanced_accuracy'])} | {fmt(row['precision'])} | {fmt(row['recall'])} | "
+                f"{fmt(row['fpr'])} | {fmt(row['fnr'])} | {fmt(row['mcc'])} |\n"
+            )
+    f.write("\n")
+
+
 def write_metric_definitions(f):
     f.write("## Metric Definitions For Paper\n\n")
     f.write("- `+|a|` model labels denote QGrid-only oracle/residual-aware ablations using the synthetic attack vector magnitude.\n")
@@ -155,6 +188,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--metrics", default="runs/plots/detector_metrics_summary.csv")
     ap.add_argument("--plots-root", default="runs/plots")
+    ap.add_argument("--detectors-root", default="runs/detectors")
     ap.add_argument("--out", default="PAPER_RESULTS.md")
     args = ap.parse_args()
 
@@ -167,6 +201,7 @@ def main():
         write_best_by_system(f, rows)
         write_by_bus_tables(f, rows)
         write_overview_table(f, rows)
+        write_qgnn_threshold_sweeps(f, Path(args.detectors_root))
         write_figure_index(f, plots_root)
         write_metric_definitions(f)
     print(f"wrote {args.out} from {args.metrics}")

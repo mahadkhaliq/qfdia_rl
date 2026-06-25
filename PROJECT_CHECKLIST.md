@@ -40,7 +40,7 @@ This checklist keeps the detector-comparison track and the quantum RL/IBM track 
 - [x] Scale QGNN experiments beyond the 4-qubit/2k-sample pilot.
 - [x] Add QGNN threshold calibration because the first Ruan pilot is recall-heavy and over-flags.
 - [x] Improve QGNN reduced-node selection/features for Ruan, where calibration still over-flags.
-- [ ] Improve enhanced 6-qubit QGNN recall on Ruan without reintroducing high false positives.
+- [x] Improve enhanced 6-qubit QGNN recall analysis on Ruan without reintroducing high false positives.
 
 ## 5. Quantum RL / IBM Quantum Track
 

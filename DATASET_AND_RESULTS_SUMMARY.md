@@ -82,7 +82,7 @@ The 1D-CNN is currently the strongest deployable detector. MLP is competitive on
 
 The QGrid `+|a|` ablation is an oracle/residual-aware upper bound: performance is nearly perfect because the synthetic attack magnitude is supplied. This is useful for paper analysis, but should be clearly separated from deployable detectors unless a realistic residual estimator supplies an equivalent signal.
 
-The reduced QGNN pilot is useful as a quantum architecture proof, not yet as a winning detector. On QGrid-Synth 30-bus it learns a meaningful decision boundary, and validation threshold calibration improves F1 from 0.7262 to 0.7550. On Ruan CAISO 30-bus, the original 4-qubit calibrated model over-flags, while the enhanced 6-qubit hybrid node-selection model improves F1 to 0.7530 and reduces FPR to 0.0. Its remaining weakness is recall, so the next QGNN step should tune the enhanced model for higher attack recall without losing the false-positive control.
+The reduced QGNN pilot is useful as a quantum architecture proof, not yet as a winning detector. On QGrid-Synth 30-bus it learns a meaningful decision boundary, and validation threshold calibration improves F1 from 0.7262 to 0.7550. On Ruan CAISO 30-bus, the original 4-qubit calibrated model over-flags, while the enhanced 6-qubit hybrid node-selection model improves F1 to 0.7530 and reduces FPR to 0.0. A post-hoc threshold sweep on the enhanced 6-qubit model improves recall from 0.6039 to 0.6135 at FPR <= 0.05, so the remaining limitation is model separability rather than threshold choice alone.
 
 ## Plot Artifacts
 
