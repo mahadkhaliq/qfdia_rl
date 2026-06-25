@@ -126,6 +126,33 @@ def make_model(name: str, input_dim: int) -> nn.Module:
     raise ValueError(f"unknown model {name}")
 
 
+def model_parameter_counts(model: nn.Module) -> dict[str, int]:
+    trainable = sum(p.numel() for p in model.parameters() if p.requires_grad)
+    total = sum(p.numel() for p in model.parameters())
+    return {"total_parameters": int(total), "trainable_parameters": int(trainable)}
+
+
+def write_architecture_summary(model: nn.Module, cfg: RunConfig, input_dim: int, out_dir: Path) -> dict:
+    summary = {
+        "model": cfg.model,
+        "input_dim": int(input_dim),
+        "feature_mode": cfg.feature_mode,
+        **model_parameter_counts(model),
+        "architecture": repr(model),
+    }
+    with open(out_dir / "architecture.json", "w") as f:
+        json.dump(summary, f, indent=2)
+    with open(out_dir / "architecture.txt", "w") as f:
+        f.write(f"model: {cfg.model}\n")
+        f.write(f"input_dim: {int(input_dim)}\n")
+        f.write(f"feature_mode: {cfg.feature_mode}\n")
+        f.write(f"total_parameters: {summary['total_parameters']}\n")
+        f.write(f"trainable_parameters: {summary['trainable_parameters']}\n\n")
+        f.write(summary["architecture"])
+        f.write("\n")
+    return summary
+
+
 def evaluate(model, loader, device):
     model.eval()
     probs, labels = [], []
@@ -189,6 +216,12 @@ def train(cfg: RunConfig, out_dir: Path):
         device = torch.device("cpu")
     print(f"training {cfg.model} on {device}", flush=True)
     model = make_model(cfg.model, x_train.shape[1]).to(device)
+    arch = write_architecture_summary(model, cfg, x_train.shape[1], out_dir)
+    print(
+        f"architecture parameters: total={arch['total_parameters']} "
+        f"trainable={arch['trainable_parameters']}",
+        flush=True,
+    )
     opt = torch.optim.AdamW(model.parameters(), lr=cfg.lr, weight_decay=1e-4)
     loss_fn = nn.BCEWithLogitsLoss()
 
@@ -240,7 +273,17 @@ def train(cfg: RunConfig, out_dir: Path):
         model.load_state_dict(best_state)
     test = evaluate(model, test_loader, device)
     with open(out_dir / "config.json", "w") as f:
-        json.dump({**asdict(cfg), "input_dim": int(x.shape[1]), "device": str(device)}, f, indent=2)
+        json.dump(
+            {
+                **asdict(cfg),
+                "input_dim": int(x.shape[1]),
+                "device": str(device),
+                "total_parameters": arch["total_parameters"],
+                "trainable_parameters": arch["trainable_parameters"],
+            },
+            f,
+            indent=2,
+        )
     with open(out_dir / "metrics.json", "w") as f:
         json.dump(test, f, indent=2)
     torch.save({"model": model.state_dict(), "scaler_mean": scaler.mean_, "scaler_scale": scaler.scale_}, out_dir / "model.pt")
