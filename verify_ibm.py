@@ -29,7 +29,7 @@ Dependencies for the qiskit paths (install in your synthgrad env):
     pip install pennylane-qiskit qiskit-aer qiskit-ibm-runtime
 """
 from __future__ import annotations
-import os, sys, argparse, numpy as np
+import os, sys, argparse, json, time, numpy as np
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import pennylane as qml
@@ -91,6 +91,7 @@ def main():
     ap.add_argument("--ibm-backend", default=None, help="e.g. ibm_pittsburgh; else least busy")
     ap.add_argument("--fake-backend", default="FakeKolkataV2", help="for aer_noisy (>= n_qubits)")
     ap.add_argument("--seed", type=int, default=0)
+    ap.add_argument("--out", default=None, help="optional JSON file for verification metrics")
     args = ap.parse_args()
 
     cfg = BUS_CONFIGS[args.bus]
@@ -111,18 +112,20 @@ def main():
     dev_circ = build_circuit(dev, cfg.n_qubits)
 
     # ---- faithfulness check (cheap, skip on real hardware to save shots) ----
+    faithfulness = None
     if args.device in ("aer", "aer_noisy"):
-        o = env.reset()
+        o, _ = env.reset()
         ang = np.tanh(params["W_enc"] @ o) * np.pi
         e_sim = np.array(sim_circ(ang, params["theta_q"]), dtype=float)
         e_dev = np.array(dev_circ(ang, params["theta_q"]), dtype=float)
-        print(f"  faithfulness max|e_sim - e_{args.device}| = {np.max(np.abs(e_sim - e_dev)):.4f}"
+        faithfulness = float(np.max(np.abs(e_sim - e_dev)))
+        print(f"  faithfulness max|e_sim - e_{args.device}| = {faithfulness:.4f}"
               + ("   (noiseless: should be ~0)" if args.device == "aer" else "   (noise expected)"))
 
     # ---- paired evaluation: same operating points on simulator and on the device ----
     res_sim, sds_sim, res_dev, sds_dev, dabs = [], [], [], [], []
     for k in range(args.n_points):
-        obs = env.reset()
+        obs, _ = env.reset()
         a_sim = attack_from(sim_circ, params, obs, cfg.epsilon)
         a_dev = attack_from(dev_circ, params, obs, cfg.epsilon)
         res_sim.append(env.bdd_residual(a_sim)); sds_sim.append(env.state_deviation(a_sim))
@@ -150,10 +153,51 @@ def main():
     still_stealthy = fl_d < 0.10
     if still_stealthy and impact_kept:
         print("\n  VERDICT: the learned attack survives this device -- stealthy and impactful on hardware.")
+        verdict = "survives_device"
     elif still_stealthy:
         print("\n  VERDICT: still stealthy, but device noise reduced impact. Consider more shots or error mitigation.")
+        verdict = "stealthy_reduced_impact"
     else:
         print("\n  VERDICT: device noise pushes attacks above the BDD threshold. Apply error mitigation (DD+TREX) or increase shots.")
+        verdict = "noise_breaks_stealth"
+
+    if args.out:
+        payload = {
+            "timestamp_unix": time.time(),
+            "bus": args.bus,
+            "policy": args.load,
+            "device": args.device,
+            "shots": args.shots,
+            "n_points": args.n_points,
+            "ibm_backend": args.ibm_backend,
+            "fake_backend": args.fake_backend if args.device == "aer_noisy" else None,
+            "n_qubits": cfg.n_qubits,
+            "vqc_layers": cfg.vqc_layers,
+            "theta_parameters": int(np.prod(policy.theta_shape)),
+            "tau_bdd": float(tau),
+            "faithfulness_max_abs": faithfulness,
+            "simulator": {
+                "stealth": float(st_s),
+                "sds": float(sd_s),
+                "flagged_rate": float(fl_s),
+                "residual_mean": float(np.mean(res_sim)),
+                "residual_std": float(np.std(res_sim)),
+            },
+            "device_result": {
+                "stealth": float(st_d),
+                "sds": float(sd_d),
+                "flagged_rate": float(fl_d),
+                "residual_mean": float(np.mean(res_dev)),
+                "residual_std": float(np.std(res_dev)),
+                "mean_abs_attack_delta": float(np.mean(dabs)),
+            },
+            "verdict": verdict,
+        }
+        out = os.path.abspath(args.out)
+        os.makedirs(os.path.dirname(out), exist_ok=True)
+        with open(out, "w") as f:
+            json.dump(payload, f, indent=2)
+        print(f"  wrote verification metrics to {out}")
 
 
 if __name__ == "__main__":

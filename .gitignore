@@ -21,6 +21,8 @@ data/qgrid_synth/
 data/canonical/
 runs/detectors/
 runs/policies/
+runs/plots/
+runs/quantum_architectures/
 logs/
 
 # External downloaded datasets/references
@@ -44,4 +46,3 @@ slurm-*.out
 *.out
 *.err
 *.log
-
