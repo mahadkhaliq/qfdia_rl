@@ -60,21 +60,30 @@ METRIC_YLABELS = {
 def parse_run_name(path: Path):
     m = RUN_RE.match(path.name)
     if not m:
-        return {"dataset": "unknown", "bus": "unknown", "model": path.name}
+        return {"dataset": "unknown", "bus": "unknown", "model": path.name, "variant": "run"}
     d = m.groupdict()
-    return {"dataset": d["dataset"], "bus": int(d["bus"]), "model": d["model"]}
+    variant = "full"
+    if "calibrated" in path.name:
+        variant = "calibrated"
+    elif "pilot" in path.name:
+        variant = "pilot"
+    return {"dataset": d["dataset"], "bus": int(d["bus"]), "model": d["model"], "variant": variant}
 
 
 def add_display_columns(df: pd.DataFrame) -> pd.DataFrame:
     df = df.copy()
     df["dataset_name"] = df["dataset"].map(DATASET_NAMES).fillna(df["dataset"].astype(str))
     df["model_name"] = df["model"].map(MODEL_NAMES).fillna(df["model"].astype(str))
+    qgnn = df["model"].eq("qgnn")
+    df.loc[qgnn & df["variant"].eq("pilot"), "model_name"] = "QGNN-pilot"
+    df.loc[qgnn & df["variant"].eq("calibrated"), "model_name"] = "QGNN-cal"
     df["system_label"] = df["dataset_name"] + " " + df["bus"].astype(str) + "-bus"
     df["plot_label"] = df["system_label"] + "\n" + df["model_name"]
     df["dataset_order"] = df["dataset"].map({"qgrid": 0, "ruan": 1}).fillna(99)
     df["model_order"] = df["model"].map(
         {"cnn1d": 0, "mlp": 1, "gcn": 2, "wgcn": 3, "gat": 4, "qgnn": 5}
     ).fillna(99)
+    df["variant_order"] = df["variant"].map({"full": 0, "pilot": 1, "calibrated": 2}).fillna(9)
     return df
 
 
@@ -88,7 +97,7 @@ def load_metrics(root: Path) -> pd.DataFrame:
     if not rows:
         raise FileNotFoundError(f"no metrics.json files found under {root}")
     df = add_display_columns(pd.DataFrame(rows))
-    return df.sort_values(["dataset_order", "bus", "model_order", "run"])
+    return df.sort_values(["dataset_order", "bus", "model_order", "variant_order", "run"])
 
 
 def load_histories(root: Path) -> pd.DataFrame:
@@ -108,7 +117,7 @@ def load_histories(root: Path) -> pd.DataFrame:
 
 def plot_bars(metrics: pd.DataFrame, out: Path):
     metrics = metrics.copy()
-    metrics = metrics.sort_values(["dataset_order", "bus", "model_order", "run"])
+    metrics = metrics.sort_values(["dataset_order", "bus", "model_order", "variant_order", "run"])
 
     fig, axes = plt.subplots(1, 2, figsize=(16, 5.2))
     good = ["f1", "auroc", "auprc", "balanced_accuracy", "mcc"]
@@ -138,7 +147,7 @@ def plot_bars(metrics: pd.DataFrame, out: Path):
 
 def plot_individual_metric_bars(metrics: pd.DataFrame, out_dir: Path):
     out_dir.mkdir(parents=True, exist_ok=True)
-    metrics = metrics.sort_values(["dataset_order", "bus", "model_order", "run"])
+    metrics = metrics.sort_values(["dataset_order", "bus", "model_order", "variant_order", "run"])
     metric_cols = [
         "accuracy",
         "balanced_accuracy",
@@ -171,7 +180,7 @@ def plot_individual_metric_bars(metrics: pd.DataFrame, out_dir: Path):
 
 def plot_learning(hist: pd.DataFrame, out: Path):
     hist = hist.copy()
-    hist = hist.sort_values(["dataset_order", "bus", "model_order", "run", "epoch"])
+    hist = hist.sort_values(["dataset_order", "bus", "model_order", "variant_order", "run", "epoch"])
     panels = [("val_f1", "Validation F1"), ("val_auprc", "Validation AUPRC"), ("train_loss", "Train Loss")]
     fig, axes = plt.subplots(1, 3, figsize=(17, 5.0))
     for ax, (col, title) in zip(axes, panels):
@@ -192,7 +201,7 @@ def plot_learning(hist: pd.DataFrame, out: Path):
 
 def plot_individual_learning_curves(hist: pd.DataFrame, out_dir: Path):
     out_dir.mkdir(parents=True, exist_ok=True)
-    hist = hist.sort_values(["dataset_order", "bus", "model_order", "run", "epoch"])
+    hist = hist.sort_values(["dataset_order", "bus", "model_order", "variant_order", "run", "epoch"])
     curves = [
         ("val_f1", "Validation F1", "score"),
         ("val_auprc", "Validation AUPRC", "score"),
