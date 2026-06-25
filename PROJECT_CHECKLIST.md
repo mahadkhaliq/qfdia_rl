@@ -45,12 +45,12 @@ This checklist keeps the detector-comparison track and the quantum RL/IBM track 
 - [x] Existing `verify_ibm.py` supports simulator, Aer, noisy Aer, and IBM hardware verification.
 - [x] Generate explicit quantum circuit architecture summaries for each bus.
 - [ ] Verify trained policies with:
-  - noiseless simulator,
-  - Qiskit Aer,
-  - fake/noisy backend,
-  - selected IBM backend.
-- [ ] Log IBM verification metadata:
-  backend, shots, qubits, circuit depth, device result, simulator result, stealth, SDS, flagged rate.
+  - [x] noiseless simulator,
+  - [x] Qiskit Aer,
+  - [x] fake/noisy backend,
+  - [ ] selected IBM backend.
+- [x] Log IBM verification metadata:
+  backend, shots, qubits, logical circuit depth, device result, simulator result, stealth, SDS, flagged rate.
 - [ ] Keep real QPU work as inference/verification first; full QNPG training on queued hardware is not practical.
 - [x] Add clean IBM/Qiskit environment setup script for latest IBM hardware verification.
 - [x] Add quantum stack checker and Hellbender verification Slurm wrapper.

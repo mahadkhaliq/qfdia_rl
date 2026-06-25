@@ -48,6 +48,25 @@ def build_circuit(dev, n_qubits):
     return circ
 
 
+def logical_circuit_resources(n_qubits, theta_shape):
+    circ = build_circuit(qml.device("default.qubit", wires=n_qubits), n_qubits)
+    angles = np.zeros(n_qubits)
+    theta = np.zeros(theta_shape)
+    try:
+        specs = qml.specs(circ)(angles, theta)
+        resources = specs.get("resources") if hasattr(specs, "get") else getattr(specs, "resources", None)
+        if resources is None:
+            return {}
+        gate_types = getattr(resources, "gate_types", {})
+        return {
+            "logical_depth": int(getattr(resources, "depth", 0)),
+            "logical_num_gates": int(getattr(resources, "num_gates", 0)),
+            "logical_gate_types": {str(k): int(v) for k, v in gate_types.items()},
+        }
+    except Exception as exc:
+        return {"logical_resource_error": f"{type(exc).__name__}: {exc}"}
+
+
 def make_device(mode, n_qubits, shots, ibm_backend, fake_backend):
     if mode == "sim":
         return qml.device("default.qubit", wires=n_qubits)
@@ -104,8 +123,12 @@ def main():
     sd = np.load(args.load)
     policy.load_state_dict({k: sd[k] for k in sd.files})
     params = {k: np.asarray(v, dtype=float) for k, v in policy.params.items()}
+    resources = logical_circuit_resources(cfg.n_qubits, policy.theta_shape)
     print(f"  loaded {args.load} | bus {args.bus} | {cfg.n_qubits} qubits, "
           f"{cfg.vqc_layers} layers, {policy.d_theta} VQC params")
+    if "logical_depth" in resources:
+        print(f"  logical circuit depth {resources['logical_depth']} | "
+              f"logical gates {resources['logical_num_gates']}")
 
     sim_circ = build_circuit(qml.device("default.qubit", wires=cfg.n_qubits), cfg.n_qubits)
     dev = make_device(args.device, cfg.n_qubits, args.shots, args.ibm_backend, args.fake_backend)
@@ -174,6 +197,7 @@ def main():
             "n_qubits": cfg.n_qubits,
             "vqc_layers": cfg.vqc_layers,
             "theta_parameters": int(np.prod(policy.theta_shape)),
+            **resources,
             "tau_bdd": float(tau),
             "faithfulness_max_abs": faithfulness,
             "simulator": {
