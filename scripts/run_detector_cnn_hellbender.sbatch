@@ -20,6 +20,8 @@ BATCH_SIZE="${BATCH_SIZE:-512}"
 ENV_NAME="${ENV_NAME:-qfdia}"
 MODEL="${MODEL:-cnn1d}"
 MAX_SAMPLES="${MAX_SAMPLES:-0}"
+DATA_FILE="${DATA_FILE:-data/qgrid_synth/qgrid_synth_${BUS}.parquet}"
+OUT_DIR="${OUT_DIR:-runs/detectors/qgrid${BUS}_${MODEL}_full}"
 
 mkdir -p logs runs/detectors
 
@@ -31,11 +33,13 @@ conda activate "${ENV_NAME}"
 echo "Host: $(hostname)"
 echo "Date: $(date)"
 echo "BUS=${BUS} MODEL=${MODEL} EPOCHS=${EPOCHS} MAX_SAMPLES=${MAX_SAMPLES}"
+echo "DATA_FILE=${DATA_FILE}"
+echo "OUT_DIR=${OUT_DIR}"
 
 python scripts/train_detector_cnn.py \
-  --data "data/qgrid_synth/qgrid_synth_${BUS}.parquet" \
+  --data "${DATA_FILE}" \
   --model "${MODEL}" \
   --max-samples "${MAX_SAMPLES}" \
   --epochs "${EPOCHS}" \
   --batch-size "${BATCH_SIZE}" \
-  --out "runs/detectors/qgrid${BUS}_${MODEL}_full"
+  --out "${OUT_DIR}"
