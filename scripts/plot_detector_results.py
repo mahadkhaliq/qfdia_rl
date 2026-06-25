@@ -26,7 +26,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 
-RUN_RE = re.compile(r"(?P<dataset>qgrid|ruan)(?P<bus>\d+)_?(?P<model>cnn1d|mlp).*")
+RUN_RE = re.compile(r"(?P<dataset>qgrid|ruan)(?P<bus>\d+)_?(?P<model>cnn1d|mlp|gcn).*")
 DATASET_NAMES = {
     "qgrid": "QGrid-Synth",
     "ruan": "Ruan CAISO",
@@ -34,6 +34,7 @@ DATASET_NAMES = {
 MODEL_NAMES = {
     "cnn1d": "1D-CNN",
     "mlp": "MLP",
+    "gcn": "GCN",
 }
 METRIC_TITLES = {
     "accuracy": "Accuracy",
@@ -68,7 +69,7 @@ def add_display_columns(df: pd.DataFrame) -> pd.DataFrame:
     df["system_label"] = df["dataset_name"] + " " + df["bus"].astype(str) + "-bus"
     df["plot_label"] = df["system_label"] + "\n" + df["model_name"]
     df["dataset_order"] = df["dataset"].map({"qgrid": 0, "ruan": 1}).fillna(99)
-    df["model_order"] = df["model"].map({"cnn1d": 0, "mlp": 1}).fillna(99)
+    df["model_order"] = df["model"].map({"cnn1d": 0, "mlp": 1, "gcn": 2}).fillna(99)
     return df
 
 
@@ -109,7 +110,7 @@ def plot_bars(metrics: pd.DataFrame, out: Path):
     bad = ["fpr", "fnr", "latency_ms_per_sample"]
 
     metrics.plot(x="plot_label", y=good, kind="bar", ax=axes[0], width=0.82)
-    axes[0].set_title("CNN and MLP FDIA Detection Quality")
+    axes[0].set_title("FDIA Detection Quality by Model")
     axes[0].set_ylim(0, 1.05)
     axes[0].set_xlabel("")
     axes[0].set_ylabel("score")
@@ -117,7 +118,7 @@ def plot_bars(metrics: pd.DataFrame, out: Path):
     axes[0].legend(fontsize=8)
 
     metrics.plot(x="plot_label", y=bad, kind="bar", ax=axes[1], width=0.82)
-    axes[1].set_title("CNN and MLP Error / Runtime")
+    axes[1].set_title("FDIA Detection Error / Runtime by Model")
     axes[1].set_xlabel("")
     axes[1].set_ylabel("rate or ms/sample")
     axes[1].grid(axis="y", alpha=0.3)
