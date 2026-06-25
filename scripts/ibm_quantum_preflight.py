@@ -75,8 +75,17 @@ def backend_summary(service, min_qubits: int, limit: int) -> dict:
     except Exception as exc:
         return {"available": False, "error": f"{type(exc).__name__}: {exc}"}
 
+    def pending_jobs_for_sort(backend) -> int:
+        try:
+            status = backend.status()
+            pending = getattr(status, "pending_jobs", None)
+            return int(pending) if pending is not None else 10**9
+        except Exception:
+            return 10**9
+
     rows = []
-    for backend in backends[:limit]:
+    sorted_backends = sorted(backends, key=pending_jobs_for_sort)
+    for backend in sorted_backends[:limit]:
         status = None
         try:
             status = backend.status()
@@ -92,7 +101,7 @@ def backend_summary(service, min_qubits: int, limit: int) -> dict:
                 "operational": operational,
             }
         )
-    return {"available": bool(rows), "count": len(backends), "shown": rows}
+    return {"available": bool(rows), "count": len(backends), "shown": rows, "selection": "lowest_pending_jobs_first"}
 
 
 def main():
