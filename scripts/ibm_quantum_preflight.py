@@ -34,12 +34,28 @@ def account_summary(service_cls) -> dict:
     else:
         iterable = enumerate(accounts)
     for name, account in iterable:
-        text = str(account)
+        if isinstance(account, dict):
+            channel = account.get("channel")
+            url = account.get("url")
+            instance = account.get("instance")
+            private_endpoint = account.get("private_endpoint")
+            verify = account.get("verify")
+        else:
+            channel = getattr(account, "channel", None)
+            url = getattr(account, "url", None)
+            instance = getattr(account, "instance", None)
+            private_endpoint = getattr(account, "private_endpoint", None)
+            verify = getattr(account, "verify", None)
         safe_accounts.append(
             {
                 "name": str(name),
-                "has_instance": "instance" in text.lower(),
-                "summary": text.replace("token=", "token=<hidden>"),
+                "channel": channel,
+                "url": url,
+                "has_instance": bool(instance),
+                "instance_prefix": str(instance)[:32] + "..." if instance else None,
+                "private_endpoint": private_endpoint,
+                "verify": verify,
+                "token": "<hidden>",
             }
         )
     return {"available": bool(safe_accounts), "count": len(safe_accounts), "accounts": safe_accounts}
