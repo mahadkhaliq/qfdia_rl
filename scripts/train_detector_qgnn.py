@@ -22,6 +22,7 @@ import sys
 import time
 from dataclasses import asdict, dataclass
 from pathlib import Path
+from typing import Optional
 
 import numpy as np
 import pennylane as qml
@@ -66,6 +67,8 @@ class RunConfig:
     threshold_metric: str
     adjacency: str
     adjacency_mode: str
+    node_selection: str
+    feature_mode: str
 
 
 def _stack_list_column(table, name: str) -> np.ndarray:
@@ -136,12 +139,56 @@ def normalized_adjacency(ybus: np.ndarray, mode: str) -> np.ndarray:
     return (inv_sqrt[:, None] * adj * inv_sqrt[None, :]).astype(np.float32)
 
 
-def select_reduced_nodes(ybus: np.ndarray, n_qubits: int) -> list[int]:
+def topology_node_scores(ybus: np.ndarray) -> np.ndarray:
+    mag = np.abs(ybus).astype(np.float32)
+    np.fill_diagonal(mag, 0.0)
+    degree = (mag > 1e-12).sum(axis=1)
+    strength = mag.sum(axis=1)
+    if strength.max() > 0:
+        strength = strength / strength.max()
+    if degree.max() > 0:
+        degree = degree / degree.max()
+    return degree.astype(np.float32) + strength.astype(np.float32)
+
+
+def label_shift_node_scores(x: np.ndarray, y: np.ndarray) -> np.ndarray:
+    normal = x[y == 0]
+    attack = x[y == 1]
+    if len(normal) == 0 or len(attack) == 0:
+        return np.zeros(x.shape[1], dtype=np.float32)
+    delta = attack.mean(axis=0) - normal.mean(axis=0)
+    score = np.linalg.norm(delta, axis=1).astype(np.float32)
+    if score.max() > 0:
+        score = score / score.max()
+    return score
+
+
+def select_reduced_nodes(
+    ybus: np.ndarray,
+    n_qubits: int,
+    mode: str,
+    x_train: Optional[np.ndarray] = None,
+    y_train: Optional[np.ndarray] = None,
+) -> list[int]:
+    topology_score = topology_node_scores(ybus)
+    if mode == "topology":
+        score = topology_score
+    elif mode == "label_shift":
+        if x_train is None or y_train is None:
+            raise ValueError("label_shift node selection requires x_train and y_train")
+        score = label_shift_node_scores(x_train, y_train)
+    elif mode == "hybrid":
+        if x_train is None or y_train is None:
+            raise ValueError("hybrid node selection requires x_train and y_train")
+        score = 0.5 * topology_score + 0.5 * label_shift_node_scores(x_train, y_train)
+    else:
+        raise ValueError(f"unknown node selection mode {mode}")
     mag = np.abs(ybus).astype(np.float32)
     np.fill_diagonal(mag, 0.0)
     degree = (mag > 1e-12).sum(axis=1)
     strength = mag.sum(axis=1)
     order = np.lexsort((-strength, -degree))
+    order = sorted(order, key=lambda i: (-float(score[i]), -int(degree[i]), -float(strength[i]), int(i)))
     return sorted(int(i) for i in order[:n_qubits])
 
 
@@ -158,9 +205,17 @@ def reduced_edges(ybus: np.ndarray, nodes: list[int]) -> list[tuple[int, int]]:
     return edges
 
 
-def reduce_graph_features(x: np.ndarray, adj: np.ndarray, nodes: list[int]) -> np.ndarray:
+def reduce_graph_features(x: np.ndarray, adj: np.ndarray, nodes: list[int], feature_mode: str) -> np.ndarray:
     diffused = np.einsum("ij,bjf->bif", adj, x)
-    return diffused[:, nodes, :].astype(np.float32)
+    if feature_mode == "diffused":
+        features = diffused[:, nodes, :]
+    elif feature_mode == "raw":
+        features = x[:, nodes, :]
+    elif feature_mode == "raw_plus_diffused":
+        features = np.concatenate([x[:, nodes, :], diffused[:, nodes, :]], axis=2)
+    else:
+        raise ValueError(f"unknown feature mode {feature_mode}")
+    return features.astype(np.float32)
 
 
 class ReducedQGNNDetector(nn.Module):
@@ -233,6 +288,12 @@ def write_architecture_summary(
     out_dir: Path,
 ):
     quantum_weight_shape = [cfg.q_layers, cfg.n_qubits, 3]
+    if cfg.feature_mode == "diffused":
+        encoding = "graph-diffused selected node features -> tanh linear encoder -> RY angles"
+    elif cfg.feature_mode == "raw":
+        encoding = "raw selected node features -> tanh linear encoder -> RY angles"
+    else:
+        encoding = "raw selected node features concatenated with graph-diffused features -> tanh linear encoder -> RY angles"
     summary = {
         "model": "qgnn",
         "dataset": cfg.dataset,
@@ -245,7 +306,9 @@ def write_architecture_summary(
         "reduced_edges": edges,
         "node_feature_dim": model.node_feature_dim,
         "adjacency_mode": cfg.adjacency_mode,
-        "encoding": "graph-diffused selected node features -> tanh linear encoder -> RY angles",
+        "node_selection": cfg.node_selection,
+        "feature_mode": cfg.feature_mode,
+        "encoding": encoding,
         "circuit_sequence": [
             "RY(pi * encoded_feature_i) on each selected-node qubit",
             "CNOT entanglers over reduced physical topology",
@@ -277,6 +340,8 @@ def write_architecture_summary(
             "reduced_edges",
             "node_feature_dim",
             "adjacency_mode",
+            "node_selection",
+            "feature_mode",
             "quantum_weight_shape",
             "quantum_parameters",
             "classical_encoder_parameters",
@@ -368,14 +433,7 @@ def train(cfg: RunConfig, out_dir: Path):
     x, y = load_detector_data(Path(cfg.data), cfg.bus, cfg.max_samples, cfg.seed)
     ybus = load_ybus(cfg)
     adj = normalized_adjacency(ybus, cfg.adjacency_mode)
-    nodes = select_reduced_nodes(ybus, cfg.n_qubits)
-    edges = reduced_edges(ybus, nodes)
-    x = reduce_graph_features(x, adj, nodes)
-    print(
-        f"loaded reduced x={x.shape} y={y.shape} positives={int(y.sum())} "
-        f"selected_nodes={nodes} reduced_edges={edges}",
-        flush=True,
-    )
+    print(f"loaded x={x.shape} y={y.shape} positives={int(y.sum())}", flush=True)
 
     x_train, x_test, y_train, y_test = train_test_split(
         x, y, test_size=cfg.test_size, random_state=cfg.seed, stratify=y
@@ -383,6 +441,24 @@ def train(cfg: RunConfig, out_dir: Path):
     rel_val = cfg.val_size / (1.0 - cfg.test_size)
     x_train, x_val, y_train, y_val = train_test_split(
         x_train, y_train, test_size=rel_val, random_state=cfg.seed, stratify=y_train
+    )
+
+    nodes = select_reduced_nodes(
+        ybus,
+        cfg.n_qubits,
+        cfg.node_selection,
+        x_train=x_train,
+        y_train=y_train,
+    )
+    edges = reduced_edges(ybus, nodes)
+    x_train = reduce_graph_features(x_train, adj, nodes, cfg.feature_mode)
+    x_val = reduce_graph_features(x_val, adj, nodes, cfg.feature_mode)
+    x_test = reduce_graph_features(x_test, adj, nodes, cfg.feature_mode)
+    print(
+        f"reduced x_train={x_train.shape} x_val={x_val.shape} x_test={x_test.shape} "
+        f"node_selection={cfg.node_selection} feature_mode={cfg.feature_mode} "
+        f"selected_nodes={nodes} reduced_edges={edges}",
+        flush=True,
     )
 
     scaler = StandardScaler()
@@ -463,10 +539,10 @@ def train(cfg: RunConfig, out_dir: Path):
         json.dump(
             {
                 **asdict(cfg),
-                "input_dim": int(x.shape[1] * x.shape[2]),
+                "input_dim": int(x_train.shape[1] * x_train.shape[2]),
                 "selected_nodes": nodes,
                 "reduced_edges": edges,
-                "node_feature_dim": int(x.shape[2]),
+                "node_feature_dim": int(x_train.shape[2]),
                 "device": str(device),
                 "total_parameters": arch["total_parameters"],
                 "trainable_parameters": arch["trainable_parameters"],
@@ -512,6 +588,8 @@ def main():
     ap.add_argument("--threshold-metric", choices=["f1", "balanced_accuracy", "mcc"], default="f1")
     ap.add_argument("--adjacency", default="external/ruan_fdia")
     ap.add_argument("--adjacency-mode", choices=["binary", "weighted"], default="weighted")
+    ap.add_argument("--node-selection", choices=["topology", "label_shift", "hybrid"], default="topology")
+    ap.add_argument("--feature-mode", choices=["diffused", "raw", "raw_plus_diffused"], default="diffused")
     ap.add_argument("--out", default=None)
     args = ap.parse_args()
     cfg_args = vars(args).copy()

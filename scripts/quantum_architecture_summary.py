@@ -120,6 +120,8 @@ def collect_qgnn_runs(detectors_root: Path) -> list[dict]:
                 "reduced_edges": arch.get("reduced_edges", config.get("reduced_edges", [])),
                 "node_feature_dim": arch.get("node_feature_dim", config.get("node_feature_dim")),
                 "adjacency_mode": arch.get("adjacency_mode", config.get("adjacency_mode")),
+                "node_selection": arch.get("node_selection", config.get("node_selection", "topology")),
+                "feature_mode": arch.get("feature_mode", config.get("feature_mode", "diffused")),
                 "encoding": arch.get("encoding"),
                 "circuit_sequence": arch.get(
                     "circuit_sequence",
@@ -197,6 +199,8 @@ def write_markdown(out_dir: Path, qnpg: list[dict], qgnn: list[dict], qgnn_runs:
                 f.write(f"### {item['run']}\n\n")
                 f.write(f"- Dataset/System: {item['dataset']} IEEE {item['bus']}-bus\n")
                 f.write(f"- Variant: {item['variant']}\n")
+                f.write(f"- Node selection: {item['node_selection']}\n")
+                f.write(f"- Feature mode: {item['feature_mode']}\n")
                 f.write(f"- Qubits/Layers: {item['n_qubits']} qubits, {item['q_layers']} quantum layers\n")
                 f.write(f"- Quantum parameters: {item['quantum_parameters']} with shape {item['quantum_weight_shape']}\n")
                 f.write(f"- Total trainable parameters: {item['trainable_parameters']}\n")
@@ -225,11 +229,12 @@ def write_registry(path: Path, qnpg: list[dict], qgnn_runs: list[dict]):
         if not qgnn_runs:
             f.write("No completed QGNN detector runs were found under `runs/detectors`.\n")
             return
-        f.write("| Run | Dataset/System | Variant | Qubits | Layers | Node Features | Quantum Params | Total Params | Threshold | F1 | AUROC | AUPRC |\n")
-        f.write("|---|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|\n")
+        f.write("| Run | Dataset/System | Variant | Node Selection | Feature Mode | Qubits | Layers | Node Features | Quantum Params | Total Params | Threshold | F1 | AUROC | AUPRC |\n")
+        f.write("|---|---|---|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|\n")
         for item in qgnn_runs:
             f.write(
                 f"| `{item['run']}` | {item['dataset']} IEEE {item['bus']}-bus | {item['variant']} | "
+                f"{item['node_selection']} | {item['feature_mode']} | "
                 f"{item['n_qubits']} | {item['q_layers']} | {item['node_feature_dim']} | "
                 f"{item['quantum_parameters']} | {item['trainable_parameters']} | {fmt(item['threshold'])} | "
                 f"{fmt(item['f1'])} | {fmt(item['auroc'])} | {fmt(item['auprc'])} |\n"
