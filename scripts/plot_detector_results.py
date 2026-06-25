@@ -68,7 +68,11 @@ def parse_run_name(path: Path):
         return {"dataset": "unknown", "bus": "unknown", "model": path.name, "variant": "run"}
     d = m.groupdict()
     variant = "full"
-    if "calibrated" in path.name:
+    if "enhanced6" in path.name:
+        variant = "enhanced6"
+    elif "enhanced4" in path.name:
+        variant = "enhanced4"
+    elif "calibrated" in path.name:
         variant = "calibrated"
     elif "pilot" in path.name:
         variant = "pilot"
@@ -82,6 +86,8 @@ def add_display_columns(df: pd.DataFrame) -> pd.DataFrame:
     qgnn = df["model"].eq("qgnn")
     df.loc[qgnn & df["variant"].eq("pilot"), "model_name"] = "QGNN-pilot"
     df.loc[qgnn & df["variant"].eq("calibrated"), "model_name"] = "QGNN-cal"
+    df.loc[qgnn & df["variant"].eq("enhanced4"), "model_name"] = "QGNN-enh4"
+    df.loc[qgnn & df["variant"].eq("enhanced6"), "model_name"] = "QGNN-enh6"
     df["system_label"] = df["dataset_name"] + " " + df["bus"].astype(str) + "-bus"
     df["system_key"] = df["dataset"].astype(str) + "_" + df["bus"].astype(str)
     df["plot_label"] = df["system_label"] + "\n" + df["model_name"]
@@ -89,7 +95,9 @@ def add_display_columns(df: pd.DataFrame) -> pd.DataFrame:
     df["model_order"] = df["model"].map(
         {"cnn1d": 0, "mlp": 1, "gcn": 2, "wgcn": 3, "gat": 4, "qgnn": 5}
     ).fillna(99)
-    df["variant_order"] = df["variant"].map({"full": 0, "pilot": 1, "calibrated": 2}).fillna(9)
+    df["variant_order"] = df["variant"].map(
+        {"full": 0, "pilot": 1, "calibrated": 2, "enhanced4": 3, "enhanced6": 4}
+    ).fillna(9)
     return df
 
 
