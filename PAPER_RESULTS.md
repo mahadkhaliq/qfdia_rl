@@ -6,6 +6,16 @@ Regenerate this file after new detector runs with:
 python scripts/export_paper_results.py
 ```
 
+## Best Deployable Detector Per Dataset/System
+
+| Dataset/System | Best Model | F1 | AUROC | AUPRC | FPR | FNR |
+| --- | --- | --- | --- | --- | --- | --- |
+| QGrid-Synth 118-bus | 1D-CNN | 0.8229 | 0.8967 | 0.9229 | 0.1005 | 0.2307 |
+| QGrid-Synth 30-bus | 1D-CNN | 0.9772 | 0.9964 | 0.9971 | 0.0110 | 0.0341 |
+| QGrid-Synth 57-bus | 1D-CNN | 0.8923 | 0.9529 | 0.9646 | 0.0543 | 0.1507 |
+| Ruan CAISO 118-bus | 1D-CNN | 0.9890 | 0.9994 | 0.9995 | 0.0000 | 0.0218 |
+| Ruan CAISO 30-bus | 1D-CNN | 0.9963 | 0.9979 | 0.9986 | 0.0000 | 0.0074 |
+
 ## Best Detector Per Dataset/System
 
 | Dataset/System | Best Model | F1 | AUROC | AUPRC | FPR | FNR |
@@ -40,6 +50,7 @@ python scripts/export_paper_results.py
 | Ruan CAISO 30-bus | QGNN-cal | 0.6820 | 0.5000 | 0.5175 | 1.0000 | 0.0000 | 0.5214 | 0.6055 |
 | Ruan CAISO 30-bus | QGNN-enh4 | 0.6768 | 0.5036 | 0.5194 | 0.9710 | 0.0205 | 0.6689 | 0.7508 |
 | Ruan CAISO 30-bus | QGNN-enh6 | 0.7530 | 0.8019 | 1.0000 | 0.6039 | 0.6510 | 0.7039 | 0.8211 |
+| Ruan CAISO 30-bus | QGNN-enh6-BA | 0.7530 | 0.8019 | 1.0000 | 0.6039 | 0.6510 | 0.7039 | 0.8211 |
 
 ### IEEE 57-Bus
 
@@ -106,6 +117,7 @@ python scripts/export_paper_results.py
 | Ruan CAISO 30-bus | QGNN-cal | 0.6820 | 0.5214 | 0.6055 | 1.0000 | 0.0000 | 7.3027 |
 | Ruan CAISO 30-bus | QGNN-enh4 | 0.6768 | 0.6689 | 0.7508 | 0.9637 | 0.0290 | 6.6204 |
 | Ruan CAISO 30-bus | QGNN-enh6 | 0.7530 | 0.7039 | 0.8211 | 0.0000 | 0.3961 | 10.9661 |
+| Ruan CAISO 30-bus | QGNN-enh6-BA | 0.7530 | 0.7039 | 0.8211 | 0.0000 | 0.3961 | 10.7415 |
 | Ruan CAISO 118-bus | 1D-CNN | 0.9890 | 0.9994 | 0.9995 | 0.0000 | 0.0218 | 0.0062 |
 | Ruan CAISO 118-bus | MLP | 0.9842 | 0.9971 | 0.9976 | 0.0000 | 0.0312 | 0.0051 |
 | Ruan CAISO 118-bus | GCN | 0.7294 | 0.8225 | 0.8747 | 0.0862 | 0.3765 | 0.0059 |
@@ -125,12 +137,34 @@ These rows report post-hoc threshold choices on saved QGNN test probabilities fo
 | `ruan30_qgnn_enhanced6` | Best Recall @ FPR <= 0.10 | 0.4446 | 0.7405 | 0.7834 | 0.9338 | 0.6135 | 0.0466 | 0.3865 | 0.5980 |
 | `ruan30_qgnn_enhanced6` | Best Recall @ FPR <= 0.20 | 0.4445 | 0.6957 | 0.7237 | 0.7950 | 0.6184 | 0.1710 | 0.3816 | 0.4558 |
 
+## Complete Table Files
+
+- `paper_tables/best_deployable_by_system.csv`
+- `paper_tables/detector_metrics_118_bus.csv`
+- `paper_tables/detector_metrics_30_bus.csv`
+- `paper_tables/detector_metrics_57_bus.csv`
+- `paper_tables/detector_metrics_complete.csv`
+- `paper_tables/detector_metrics_deployable.csv`
+- `paper_tables/detector_metrics_oracle_ablations.csv`
+
 ## Figure Index
 
 ### Combined Figures
 
 - `runs/plots/detector_metrics_bars.png`
 - `runs/plots/detector_learning_curves.png`
+
+### Paper Figures
+
+- `runs/plots/paper/auprc_heatmap_deployable.png`
+- `runs/plots/paper/auprc_heatmap_with_oracle.png`
+- `runs/plots/paper/auroc_heatmap_deployable.png`
+- `runs/plots/paper/auroc_heatmap_with_oracle.png`
+- `runs/plots/paper/f1_heatmap_deployable.png`
+- `runs/plots/paper/f1_heatmap_with_oracle.png`
+- `runs/plots/paper/f1_ranked_by_system_deployable.png`
+- `runs/plots/paper/fpr_fnr_tradeoff_deployable.png`
+- `runs/plots/paper/latency_deployable.png`
 
 ### Per-Bus Figures
 

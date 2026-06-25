@@ -34,6 +34,18 @@ METRIC_COLUMNS = [
     "auprc",
     "latency_ms_per_sample",
 ]
+TABLE_COLUMNS = [
+    "run",
+    "dataset",
+    "bus",
+    "model",
+    "variant",
+    "system_label",
+    "model_name",
+    *METRIC_COLUMNS,
+    "n",
+    "threshold",
+]
 
 
 def read_rows(path: Path) -> list[dict[str, str]]:
@@ -91,12 +103,33 @@ def write_overview_table(f, rows: list[dict[str, str]]):
     f.write("\n")
 
 
+def is_oracle_row(row: dict[str, str]) -> bool:
+    return row.get("variant") == "z_plus_abs_a"
+
+
 def write_best_by_system(f, rows: list[dict[str, str]]):
     f.write("## Best Detector Per Dataset/System\n\n")
     columns = ["Dataset/System", "Best Model", "F1", "AUROC", "AUPRC", "FPR", "FNR"]
     f.write(table_header(columns))
     by_system: dict[str, list[dict[str, str]]] = defaultdict(list)
     for row in rows:
+        by_system[row["system_label"]].append(row)
+    for system in sorted(by_system):
+        best = max(by_system[system], key=lambda r: as_float(r, "f1"))
+        f.write(
+            f"| {md(system)} | {md(best['model_name'])} | {fmt(best['f1'])} | {fmt(best['auroc'])} | "
+            f"{fmt(best['auprc'])} | {fmt(best['fpr'])} | {fmt(best['fnr'])} |\n"
+        )
+    f.write("\n")
+
+
+def write_best_deployable_by_system(f, rows: list[dict[str, str]]):
+    deployable = [row for row in rows if not is_oracle_row(row)]
+    f.write("## Best Deployable Detector Per Dataset/System\n\n")
+    columns = ["Dataset/System", "Best Model", "F1", "AUROC", "AUPRC", "FPR", "FNR"]
+    f.write(table_header(columns))
+    by_system: dict[str, list[dict[str, str]]] = defaultdict(list)
+    for row in deployable:
         by_system[row["system_label"]].append(row)
     for system in sorted(by_system):
         best = max(by_system[system], key=lambda r: as_float(r, "f1"))
@@ -131,11 +164,57 @@ def write_figure_index(f, plots_root: Path):
     for rel in ["detector_metrics_bars.png", "detector_learning_curves.png"]:
         path = plots_root / rel
         f.write(f"- `{path}`\n")
+    f.write("\n### Paper Figures\n\n")
+    for path in sorted((plots_root / "paper").glob("*.png")):
+        f.write(f"- `{path}`\n")
     f.write("\n### Per-Bus Figures\n\n")
     for path in sorted((plots_root / "by_bus").glob("*.png")):
         f.write(f"- `{path}`\n")
     f.write("\n### Per-System Figures\n\n")
     for path in sorted((plots_root / "by_system").glob("*.png")):
+        f.write(f"- `{path}`\n")
+    f.write("\n")
+
+
+def project_row(row: dict[str, str]) -> dict[str, str]:
+    return {col: row.get(col, "") for col in TABLE_COLUMNS}
+
+
+def write_csv(path: Path, rows: list[dict[str, str]], columns: list[str] = TABLE_COLUMNS):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with open(path, "w", newline="") as handle:
+        writer = csv.DictWriter(handle, fieldnames=columns)
+        writer.writeheader()
+        for row in rows:
+            writer.writerow({col: row.get(col, "") for col in columns})
+
+
+def export_csv_tables(rows: list[dict[str, str]], tables_dir: Path):
+    sorted_all = [project_row(row) for row in sort_rows(rows)]
+    deployable = [row for row in rows if not is_oracle_row(row)]
+    oracle = [row for row in rows if is_oracle_row(row)]
+    write_csv(tables_dir / "detector_metrics_complete.csv", sorted_all)
+    write_csv(tables_dir / "detector_metrics_deployable.csv", [project_row(row) for row in sort_rows(deployable)])
+    write_csv(tables_dir / "detector_metrics_oracle_ablations.csv", [project_row(row) for row in sort_rows(oracle)])
+
+    best_rows = []
+    by_system: dict[str, list[dict[str, str]]] = defaultdict(list)
+    for row in deployable:
+        by_system[row["system_label"]].append(row)
+    for system in sorted(by_system):
+        best_rows.append(project_row(max(by_system[system], key=lambda r: as_float(r, "f1"))))
+    write_csv(tables_dir / "best_deployable_by_system.csv", best_rows)
+
+    by_bus: dict[str, list[dict[str, str]]] = defaultdict(list)
+    for row in rows:
+        by_bus[row["bus"]].append(row)
+    for bus, bus_rows in by_bus.items():
+        write_csv(tables_dir / f"detector_metrics_{int(float(bus))}_bus.csv", [project_row(row) for row in sort_rows(bus_rows)])
+
+
+def write_table_index(f, tables_dir: Path):
+    f.write("## Complete Table Files\n\n")
+    for path in sorted(tables_dir.glob("*.csv")):
         f.write(f"- `{path}`\n")
     f.write("\n")
 
@@ -190,21 +269,26 @@ def main():
     ap.add_argument("--plots-root", default="runs/plots")
     ap.add_argument("--detectors-root", default="runs/detectors")
     ap.add_argument("--out", default="PAPER_RESULTS.md")
+    ap.add_argument("--tables-dir", default="paper_tables")
     args = ap.parse_args()
 
     rows = read_rows(Path(args.metrics))
     plots_root = Path(args.plots_root)
+    tables_dir = Path(args.tables_dir)
+    export_csv_tables(rows, tables_dir)
     with open(args.out, "w") as f:
         f.write("# Paper Results: FDIA Detector Comparison\n\n")
         f.write("Regenerate this file after new detector runs with:\n\n")
         f.write("```bash\npython scripts/export_paper_results.py\n```\n\n")
+        write_best_deployable_by_system(f, rows)
         write_best_by_system(f, rows)
         write_by_bus_tables(f, rows)
         write_overview_table(f, rows)
         write_qgnn_threshold_sweeps(f, Path(args.detectors_root))
+        write_table_index(f, tables_dir)
         write_figure_index(f, plots_root)
         write_metric_definitions(f)
-    print(f"wrote {args.out} from {args.metrics}")
+    print(f"wrote {args.out} and CSV tables under {tables_dir} from {args.metrics}")
 
 
 if __name__ == "__main__":

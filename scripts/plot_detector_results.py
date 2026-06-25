@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import re
 from pathlib import Path
 
@@ -56,6 +57,31 @@ METRIC_YLABELS = {
     "latency_ms_per_sample": "ms/sample",
 }
 SORT_COLS = ["dataset_order", "bus", "model_order", "variant_order", "run"]
+PAPER_SCORE_METRICS = ["f1", "auroc", "auprc"]
+PAPER_MODEL_ORDER = [
+    "1D-CNN",
+    "MLP",
+    "GCN",
+    "W-GCN",
+    "GAT",
+    "QGNN-pilot",
+    "QGNN-cal",
+    "QGNN-enh4",
+    "QGNN-enh6",
+    "QGNN-enh6-BA",
+]
+MODEL_COLORS = {
+    "1D-CNN": "#2f6f9f",
+    "MLP": "#4c956c",
+    "GCN": "#d68c45",
+    "W-GCN": "#8f5f9f",
+    "GAT": "#b5525c",
+    "QGNN-pilot": "#595959",
+    "QGNN-cal": "#756bb1",
+    "QGNN-enh4": "#9e77ad",
+    "QGNN-enh6": "#6b4c9a",
+    "QGNN-enh6-BA": "#4a3474",
+}
 
 
 def slugify(value: str) -> str:
@@ -95,6 +121,7 @@ def add_display_columns(df: pd.DataFrame) -> pd.DataFrame:
     df.loc[qgnn & df["variant"].eq("enhanced6_balacc"), "model_name"] = "QGNN-enh6-BA"
     residual = df["variant"].eq("z_plus_abs_a") & ~qgnn
     df.loc[residual, "model_name"] = df.loc[residual, "model_name"] + "+|a|"
+    df["is_oracle"] = df["variant"].eq("z_plus_abs_a")
     df["system_label"] = df["dataset_name"] + " " + df["bus"].astype(str) + "-bus"
     df["system_key"] = df["dataset"].astype(str) + "_" + df["bus"].astype(str)
     df["plot_label"] = df["system_label"] + "\n" + df["model_name"]
@@ -114,6 +141,25 @@ def add_display_columns(df: pd.DataFrame) -> pd.DataFrame:
         }
     ).fillna(9)
     return df
+
+
+def set_plot_style():
+    plt.rcParams.update(
+        {
+            "figure.facecolor": "white",
+            "axes.facecolor": "white",
+            "axes.edgecolor": "#d0d0d0",
+            "axes.grid": True,
+            "axes.axisbelow": True,
+            "grid.color": "#e5e5e5",
+            "grid.linewidth": 0.8,
+            "font.size": 10,
+            "axes.titlesize": 12,
+            "axes.labelsize": 10,
+            "legend.frameon": False,
+            "savefig.bbox": "tight",
+        }
+    )
 
 
 def load_metrics(root: Path) -> pd.DataFrame:
@@ -211,7 +257,7 @@ def plot_learning(hist: pd.DataFrame, out: Path):
     hist = hist.copy()
     hist = hist.sort_values(SORT_COLS + ["epoch"])
     panels = [("val_f1", "Validation F1"), ("val_auprc", "Validation AUPRC"), ("train_loss", "Train Loss")]
-    fig, axes = plt.subplots(1, 3, figsize=(17, 5.0))
+    fig, axes = plt.subplots(1, 3, figsize=(17, 6.2), constrained_layout=True)
     for ax, (col, title) in zip(axes, panels):
         for label, grp in hist.groupby("plot_label", sort=False):
             grp = grp.sort_values("epoch")
@@ -222,9 +268,9 @@ def plot_learning(hist: pd.DataFrame, out: Path):
     axes[0].set_ylim(0, 1.05)
     axes[1].set_ylim(0, 1.05)
     axes[0].set_ylabel("score")
-    axes[-1].legend(fontsize=8, loc="best")
-    fig.tight_layout()
-    fig.savefig(out, dpi=180)
+    handles, labels = axes[-1].get_legend_handles_labels()
+    fig.legend(handles, labels, fontsize=6, loc="lower center", ncol=5, bbox_to_anchor=(0.5, -0.05))
+    fig.savefig(out, dpi=180, bbox_inches="tight")
     plt.close(fig)
 
 
@@ -240,7 +286,7 @@ def plot_individual_learning_curves(hist: pd.DataFrame, out_dir: Path):
     for col, title, ylabel in curves:
         if col not in hist.columns:
             continue
-        fig, ax = plt.subplots(figsize=(10.5, 5.6))
+        fig, ax = plt.subplots(figsize=(11.5, 7.0), constrained_layout=True)
         for label, grp in hist.groupby("plot_label", sort=False):
             grp = grp.sort_values("epoch")
             ax.plot(grp["epoch"], grp[col], marker="o", linewidth=2, label=label)
@@ -250,9 +296,9 @@ def plot_individual_learning_curves(hist: pd.DataFrame, out_dir: Path):
         if ylabel == "score":
             ax.set_ylim(0, 1.05)
         ax.grid(alpha=0.3)
-        ax.legend(fontsize=8, loc="best")
-        fig.tight_layout()
-        fig.savefig(out_dir / f"{col}.png", dpi=180)
+        handles, labels = ax.get_legend_handles_labels()
+        fig.legend(handles, labels, fontsize=6, loc="lower center", ncol=4, bbox_to_anchor=(0.5, -0.04))
+        fig.savefig(out_dir / f"{col}.png", dpi=180, bbox_inches="tight")
         plt.close(fig)
 
 
@@ -331,6 +377,151 @@ def plot_grouped_views(metrics: pd.DataFrame, hist: pd.DataFrame, out_dir: Path)
             plot_group_learning(hist_grp, by_bus / f"{stem}_learning.png", title, "plot_label")
 
 
+def ordered_system_labels(metrics: pd.DataFrame) -> list[str]:
+    cols = ["system_label", "dataset_order", "bus"]
+    return (
+        metrics[cols]
+        .drop_duplicates()
+        .sort_values(["dataset_order", "bus", "system_label"])["system_label"]
+        .tolist()
+    )
+
+
+def ordered_model_labels(metrics: pd.DataFrame) -> list[str]:
+    present = set(metrics["model_name"].astype(str))
+    ordered = [name for name in PAPER_MODEL_ORDER if name in present]
+    ordered.extend(sorted(present.difference(ordered)))
+    return ordered
+
+
+def deployable_only(metrics: pd.DataFrame) -> pd.DataFrame:
+    return metrics[~metrics["is_oracle"]].copy()
+
+
+def annotate_heatmap(ax, values: pd.DataFrame):
+    for row_idx, (_, row) in enumerate(values.iterrows()):
+        for col_idx, value in enumerate(row):
+            if pd.isna(value):
+                ax.text(col_idx, row_idx, "n/a", ha="center", va="center", color="#8a8a8a", fontsize=7)
+                continue
+            color = "white" if value < 0.55 else "#1c1c1c"
+            ax.text(col_idx, row_idx, f"{value:.3f}", ha="center", va="center", color=color, fontsize=8)
+
+
+def plot_metric_heatmap(metrics: pd.DataFrame, metric: str, out: Path, title: str):
+    systems = ordered_system_labels(metrics)
+    models = ordered_model_labels(metrics)
+    pivot = (
+        metrics.pivot_table(index="system_label", columns="model_name", values=metric, aggfunc="max")
+        .reindex(index=systems, columns=models)
+    )
+    width = max(9.0, 1.15 * len(models))
+    height = max(4.2, 0.62 * len(systems) + 1.6)
+    fig, ax = plt.subplots(figsize=(width, height), constrained_layout=True)
+    cmap = plt.cm.viridis.copy()
+    cmap.set_bad("#f2f2f2")
+    image = ax.imshow(pivot.values, cmap=cmap, vmin=0.0, vmax=1.0, aspect="auto")
+    annotate_heatmap(ax, pivot)
+    ax.set_xticks(range(len(models)), labels=models, rotation=35, ha="right")
+    ax.set_yticks(range(len(systems)), labels=systems)
+    ax.set_title(title)
+    ax.set_xlabel("Detector")
+    ax.set_ylabel("Dataset / system")
+    ax.grid(False)
+    cbar = fig.colorbar(image, ax=ax, fraction=0.035, pad=0.025)
+    cbar.set_label(METRIC_TITLES.get(metric, metric))
+    fig.savefig(out, dpi=220)
+    plt.close(fig)
+
+
+def plot_ranked_metric_by_system(metrics: pd.DataFrame, metric: str, out: Path):
+    systems = ordered_system_labels(metrics)
+    ncols = 2
+    nrows = math.ceil(len(systems) / ncols)
+    fig, axes = plt.subplots(nrows, ncols, figsize=(13.5, max(6.2, nrows * 3.25)), constrained_layout=True)
+    axes = axes.flatten()
+    for ax, system in zip(axes, systems):
+        grp = metrics[metrics["system_label"].eq(system)].sort_values(metric, ascending=True)
+        colors = [MODEL_COLORS.get(name, "#777777") for name in grp["model_name"]]
+        ax.barh(grp["model_name"], grp[metric], color=colors, height=0.72)
+        ax.set_xlim(0, 1.05)
+        ax.set_title(system)
+        ax.set_xlabel(METRIC_TITLES.get(metric, metric))
+        for idx, value in enumerate(grp[metric]):
+            ax.text(min(float(value) + 0.015, 1.01), idx, f"{value:.3f}", va="center", fontsize=8)
+    for ax in axes[len(systems) :]:
+        ax.axis("off")
+    fig.suptitle(f"Ranked Deployable Detector {METRIC_TITLES.get(metric, metric)} by System", y=1.01)
+    fig.savefig(out, dpi=220)
+    plt.close(fig)
+
+
+def plot_error_tradeoff(metrics: pd.DataFrame, out: Path):
+    fig, ax = plt.subplots(figsize=(8.6, 6.4), constrained_layout=True)
+    markers = {"qgrid": "o", "ruan": "s"}
+    for model_name, grp in metrics.groupby("model_name", sort=False):
+        color = MODEL_COLORS.get(model_name, "#777777")
+        for dataset, sub in grp.groupby("dataset", sort=False):
+            ax.scatter(
+                sub["fpr"],
+                sub["fnr"],
+                s=70 + 130 * sub["f1"],
+                marker=markers.get(dataset, "o"),
+                color=color,
+                edgecolor="white",
+                linewidth=0.7,
+                alpha=0.88,
+                label=f"{model_name} ({DATASET_NAMES.get(dataset, dataset)})",
+            )
+    handles, labels = ax.get_legend_handles_labels()
+    dedup = dict(zip(labels, handles))
+    ax.legend(dedup.values(), dedup.keys(), fontsize=7, ncol=2, loc="upper right")
+    ax.set_xlim(left=0)
+    ax.set_ylim(bottom=0)
+    ax.set_xlabel("False positive rate")
+    ax.set_ylabel("False negative rate")
+    ax.set_title("Deployable Detector Error Tradeoff")
+    fig.savefig(out, dpi=220)
+    plt.close(fig)
+
+
+def plot_latency(metrics: pd.DataFrame, out: Path):
+    grp = metrics.sort_values("latency_ms_per_sample", ascending=True)
+    colors = [MODEL_COLORS.get(name, "#777777") for name in grp["model_name"]]
+    labels = grp["system_label"] + " / " + grp["model_name"]
+    fig, ax = plt.subplots(figsize=(10.5, max(5.2, 0.34 * len(grp))), constrained_layout=True)
+    ax.barh(labels, grp["latency_ms_per_sample"], color=colors, height=0.72)
+    ax.set_xscale("log")
+    ax.set_xlabel("Latency (ms/sample, log scale)")
+    ax.set_title("Recorded Inference Latency by Detector")
+    for idx, value in enumerate(grp["latency_ms_per_sample"]):
+        ax.text(float(value) * 1.08, idx, f"{value:.4f}", va="center", fontsize=7)
+    fig.savefig(out, dpi=220)
+    plt.close(fig)
+
+
+def plot_paper_figures(metrics: pd.DataFrame, out_dir: Path):
+    paper_dir = out_dir / "paper"
+    paper_dir.mkdir(parents=True, exist_ok=True)
+    deployable = deployable_only(metrics)
+    for metric in PAPER_SCORE_METRICS:
+        plot_metric_heatmap(
+            deployable,
+            metric,
+            paper_dir / f"{metric}_heatmap_deployable.png",
+            f"Deployable Detector {METRIC_TITLES.get(metric, metric)}",
+        )
+        plot_metric_heatmap(
+            metrics,
+            metric,
+            paper_dir / f"{metric}_heatmap_with_oracle.png",
+            f"Detector {METRIC_TITLES.get(metric, metric)} Including Oracle Ablations",
+        )
+    plot_ranked_metric_by_system(deployable, "f1", paper_dir / "f1_ranked_by_system_deployable.png")
+    plot_error_tradeoff(deployable, paper_dir / "fpr_fnr_tradeoff_deployable.png")
+    plot_latency(deployable, paper_dir / "latency_deployable.png")
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--root", default="runs/detectors")
@@ -339,6 +530,7 @@ def main():
     root = Path(args.root)
     out_dir = Path(args.out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
+    set_plot_style()
 
     metrics = load_metrics(root)
     hist = load_histories(root)
@@ -348,6 +540,7 @@ def main():
     plot_learning(hist, out_dir / "detector_learning_curves.png")
     plot_individual_learning_curves(hist, out_dir / "learning_curves")
     plot_grouped_views(metrics, hist, out_dir)
+    plot_paper_figures(metrics, out_dir)
     print(metrics[["system_label", "model_name", "f1", "auroc", "auprc", "fpr", "fnr", "latency_ms_per_sample"]])
     print(f"wrote plots to {out_dir}")
 
