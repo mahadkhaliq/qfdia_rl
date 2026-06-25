@@ -73,6 +73,12 @@ The reduced QGNN pilot is useful as a quantum architecture proof, not yet as a w
 
 ## Plot Artifacts
 
+Paper-writing summary:
+
+```text
+PAPER_RESULTS.md
+```
+
 Combined plots:
 
 ```text
