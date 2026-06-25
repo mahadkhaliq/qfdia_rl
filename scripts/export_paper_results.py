@@ -70,6 +70,16 @@ def fmt(value: Union[str, float], digits: int = 4) -> str:
     return f"{value:.{digits}f}"
 
 
+def fmt_sci(value: Union[str, float], digits: int = 2) -> str:
+    if value == "" or value is None:
+        return "-"
+    if isinstance(value, str):
+        value = float(value)
+    if value != value:
+        return "-"
+    return f"{value:.{digits}e}"
+
+
 def md(value: str) -> str:
     return value.replace("|", "\\|")
 
@@ -254,6 +264,26 @@ def write_qgnn_threshold_sweeps(f, detectors_root: Path):
     f.write("\n")
 
 
+def write_sds_ceiling_table(f, tables_dir: Path):
+    path = tables_dir / "sds_ceiling_ratios.csv"
+    if not path.exists():
+        return
+    rows = read_rows(path)
+    if not rows:
+        return
+    f.write("## Q-NPG Analytical Stealth Ceiling\n\n")
+    f.write("These rows compare the learned Q-NPG-FDIA mean SDS against a direct max-SDS optimizer under the same linearized stealth constraint `a = Hc` and per-meter box bound.\n\n")
+    columns = ["Bus", "a_max", "SDS Ceiling", "Learned SDS", "Learned/Ceiling", "Stealth Residual", "BDD Tau"]
+    f.write(table_header(columns))
+    for row in sorted(rows, key=lambda r: int(float(r["bus"]))):
+        f.write(
+            f"| {int(float(row['bus']))} | {fmt(row['a_max'])} | {fmt(row['SDS_ceiling'])} | "
+            f"{fmt(row['SDS_learned'])} | {fmt(row['learned_over_ceiling'])} | "
+            f"{fmt_sci(row['stealth_residual'])} | {fmt(row['tau_bdd'], digits=3)} |\n"
+        )
+    f.write("\n")
+
+
 def write_metric_definitions(f):
     f.write("## Metric Definitions For Paper\n\n")
     f.write("- `+|a|` model labels denote QGrid-only oracle/residual-aware ablations using the synthetic attack vector magnitude.\n")
@@ -288,6 +318,7 @@ def main():
         write_by_bus_tables(f, rows)
         write_overview_table(f, rows)
         write_qgnn_threshold_sweeps(f, Path(args.detectors_root))
+        write_sds_ceiling_table(f, tables_dir)
         write_table_index(f, tables_dir)
         write_figure_index(f, plots_root)
         write_metric_definitions(f)

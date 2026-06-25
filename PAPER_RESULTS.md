@@ -137,6 +137,16 @@ These rows report post-hoc threshold choices on saved QGNN test probabilities fo
 | `ruan30_qgnn_enhanced6` | Best Recall @ FPR <= 0.10 | 0.4446 | 0.7405 | 0.7834 | 0.9338 | 0.6135 | 0.0466 | 0.3865 | 0.5980 |
 | `ruan30_qgnn_enhanced6` | Best Recall @ FPR <= 0.20 | 0.4445 | 0.6957 | 0.7237 | 0.7950 | 0.6184 | 0.1710 | 0.3816 | 0.4558 |
 
+## Q-NPG Analytical Stealth Ceiling
+
+These rows compare the learned Q-NPG-FDIA mean SDS against a direct max-SDS optimizer under the same linearized stealth constraint `a = Hc` and per-meter box bound.
+
+| Bus | a_max | SDS Ceiling | Learned SDS | Learned/Ceiling | Stealth Residual | BDD Tau |
+| --- | --- | --- | --- | --- | --- | --- |
+| 30 | 0.3000 | 2.3238 | 0.4701 | 0.2023 | 2.62e-23 | 79.082 |
+| 57 | 0.1800 | 1.9043 | 0.2167 | 0.1138 | 1.12e-23 | 139.921 |
+| 118 | 0.1200 | 1.7362 | 0.0722 | 0.0416 | 1.18e-22 | 272.836 |
+
 ## Complete Table Files
 
 - `paper_tables/best_deployable_by_system.csv`
@@ -147,6 +157,7 @@ These rows report post-hoc threshold choices on saved QGNN test probabilities fo
 - `paper_tables/detector_metrics_deployable.csv`
 - `paper_tables/detector_metrics_oracle_ablations.csv`
 - `paper_tables/quantum_verification_results.csv`
+- `paper_tables/sds_ceiling_ratios.csv`
 
 ## Figure Index
 

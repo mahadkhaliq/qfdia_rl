@@ -66,6 +66,8 @@ This checklist keeps the detector-comparison track and the quantum RL/IBM track 
 - [x] Add paper-ready quantum verification results table with completed simulator/Aer/noisy rows and planned IBM row.
 - [x] Add local `qfdia_plot` conda environment and reporting script so plots/tables are generated on the Mac, not on the Hellbender login node.
 - [x] Add Hellbender Slurm readiness wrapper so IBM preflight/manifest checks do not run on the login node.
+- [x] Compute analytical stealth max-SDS ceilings for IEEE 30/57/118 and log learned/ceiling ratios.
+- [x] Record QCRL paper hyperparameters, critic parameter counts, baseline-label count, and limitation replacement wording.
 
 ## 6. Permissions / Operations
 
