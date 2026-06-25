@@ -24,6 +24,14 @@ EXPECTED_PAPER_PLOTS = {
     "fpr_fnr_tradeoff_deployable.png",
     "latency_deployable.png",
 }
+EXPECTED_30_BUS_METHOD_LEARNING = {
+    "30_bus_cnn1d_learning.png",
+    "30_bus_mlp_learning.png",
+    "30_bus_gcn_learning.png",
+    "30_bus_wgcn_learning.png",
+    "30_bus_gat_learning.png",
+    "30_bus_qgnn_learning.png",
+}
 
 
 def read_csv(path: Path) -> list[dict[str, str]]:
@@ -92,6 +100,15 @@ def verify_paper_plots(plots_root: Path, failures: list[str]):
     missing = sorted(EXPECTED_PAPER_PLOTS.difference(found))
     check(not missing, f"missing paper plots: {missing}", failures)
 
+    by_bus_model_dir = plots_root / "by_bus_model"
+    bus_model_found = {path.name for path in by_bus_model_dir.glob("*.png")} if by_bus_model_dir.exists() else set()
+    bus_model_missing = sorted(EXPECTED_30_BUS_METHOD_LEARNING.difference(bus_model_found))
+    check(
+        not bus_model_missing,
+        f"missing 30-bus per-method learning plots: {bus_model_missing}",
+        failures,
+    )
+
 
 def verify_quantum_verification_table(tables_dir: Path, failures: list[str]):
     rows = read_csv(tables_dir / "quantum_verification_results.csv")
@@ -139,7 +156,8 @@ def main():
     print(
         "results consistency check passed: "
         f"{len(metrics)} detector rows, {qgnn_count} QGNN architecture-backed rows, "
-        f"{len(EXPECTED_PAPER_PLOTS)} paper plots, quantum verification table"
+        f"{len(EXPECTED_PAPER_PLOTS)} paper plots, {len(EXPECTED_30_BUS_METHOD_LEARNING)} 30-bus method plots, "
+        "quantum verification table"
     )
 
 

@@ -105,11 +105,31 @@ def collect_completed_rows(root: Path, bus: int | None) -> list[dict]:
     return sorted(rows, key=verification_sort_key)
 
 
-def planned_ibm_row(manifest_path: Path, rows: list[dict]) -> dict | None:
+def baseline_circuit_row(rows: list[dict], bus: int) -> dict:
+    for device in ["sim", "aer", "aer_noisy"]:
+        for row in rows:
+            if row.get("device") == device and int(row.get("bus") or -1) == bus:
+                return row
+    return {}
+
+
+def default_planned_hardware_run(args) -> dict:
+    return {
+        "bus": args.bus,
+        "ibm_backend": args.backend,
+        "policy": args.policy or f"runs/policies/qnpg_{args.bus}_policy.npz",
+        "shots": args.shots,
+        "n_points": args.n_points,
+        "result_tag": args.result_tag,
+        "expected_json": f"runs/quantum_architectures/verify_ibm_{args.bus}_{args.result_tag}.json",
+    }
+
+
+def planned_ibm_row(manifest_path: Path, rows: list[dict], default_plan: dict) -> dict | None:
     manifest = load_json(manifest_path)
-    if not manifest:
-        return None
-    planned = manifest.get("planned_hardware_run", {})
+    planned = default_plan.copy()
+    if manifest:
+        planned.update({k: v for k, v in manifest.get("planned_hardware_run", {}).items() if v not in (None, "")})
     bus = planned.get("bus")
     expected_json = planned.get("expected_json")
     has_complete_ibm = any(
@@ -120,16 +140,17 @@ def planned_ibm_row(manifest_path: Path, rows: list[dict]) -> dict | None:
     )
     if has_complete_ibm:
         return None
+    baseline = baseline_circuit_row(rows, int(bus))
     return {
         "status": "planned_after_token_rotation",
         "device": "ibm",
         "bus": bus,
         "backend": planned.get("ibm_backend"),
         "policy": planned.get("policy"),
-        "n_qubits": "",
-        "vqc_layers": "",
-        "logical_depth": "",
-        "logical_num_gates": "",
+        "n_qubits": baseline.get("n_qubits", ""),
+        "vqc_layers": baseline.get("vqc_layers", ""),
+        "logical_depth": baseline.get("logical_depth", ""),
+        "logical_num_gates": baseline.get("logical_num_gates", ""),
         "shots": planned.get("shots"),
         "n_points": planned.get("n_points"),
         "faithfulness_max_abs": "",
@@ -173,6 +194,7 @@ def write_markdown(path: Path, rows: list[dict], manifest_path: Path):
         handle.write("\n## Notes\n\n")
         handle.write("- `sim`, `aer`, and `aer_noisy` rows are completed non-hardware checks of the trained Q-NPG VQC actor.\n")
         handle.write("- The `ibm` row remains planned until the IBM API key has been rotated/reconfirmed and the hardware smoke job has completed.\n")
+        handle.write("- The planned hardware smoke run is intentionally small: one circuit evaluation per operating point, with the listed shot count.\n")
         handle.write(f"- Hardware safety gate and exact command are recorded in `{manifest_path}`.\n")
 
 
@@ -181,13 +203,18 @@ def main():
     ap.add_argument("--root", default="runs/quantum_architectures")
     ap.add_argument("--bus", type=int, default=30)
     ap.add_argument("--manifest", default="runs/quantum_architectures/ibm_verification_manifest.json")
+    ap.add_argument("--backend", default="ibm_fez")
+    ap.add_argument("--policy", default=None)
+    ap.add_argument("--shots", type=int, default=1024)
+    ap.add_argument("--n-points", type=int, default=4)
+    ap.add_argument("--result-tag", default="ibm_smoke_30")
     ap.add_argument("--csv-out", default="paper_tables/quantum_verification_results.csv")
     ap.add_argument("--md-out", default="QUANTUM_VERIFICATION_RESULTS.md")
     args = ap.parse_args()
 
     root = Path(args.root)
     rows = collect_completed_rows(root, args.bus)
-    planned = planned_ibm_row(Path(args.manifest), rows)
+    planned = planned_ibm_row(Path(args.manifest), rows, default_planned_hardware_run(args))
     if planned:
         rows.append(planned)
     rows = sorted(rows, key=verification_sort_key)

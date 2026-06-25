@@ -64,6 +64,7 @@ This checklist keeps the detector-comparison track and the quantum RL/IBM track 
 - [x] Add IBM Runtime account/backend preflight checker that does not expose API tokens.
 - [x] Add token-free IBM verification manifest with existing simulator/Aer/noisy results and planned hardware smoke-test command.
 - [x] Add paper-ready quantum verification results table with completed simulator/Aer/noisy rows and planned IBM row.
+- [x] Add local `qfdia_plot` conda environment and reporting script so plots/tables are generated on the Mac, not on the Hellbender login node.
 
 ## 6. Permissions / Operations
 
@@ -74,3 +75,5 @@ For hands-off progress, approve persistent prompts for:
 - `git` so Codex can commit and push code changes.
 
 Keep at least one Hellbender GPU allocation running for training. For IBM Quantum, do not paste API tokens into chat; configure the account in the environment/session instead.
+
+Generate plots and paper tables locally with `scripts/run_local_reporting.sh`. Do not run Python, plotting, training, or data-processing commands on the Hellbender login node; use Slurm, an interactive allocation, or Open OnDemand for cluster-side work.

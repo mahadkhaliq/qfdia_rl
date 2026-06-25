@@ -170,6 +170,9 @@ def write_figure_index(f, plots_root: Path):
     f.write("\n### Per-Bus Figures\n\n")
     for path in sorted((plots_root / "by_bus").glob("*.png")):
         f.write(f"- `{path}`\n")
+    f.write("\n### Per-Bus / Per-Method Figures\n\n")
+    for path in sorted((plots_root / "by_bus_model").glob("*.png")):
+        f.write(f"- `{path}`\n")
     f.write("\n### Per-System Figures\n\n")
     for path in sorted((plots_root / "by_system").glob("*.png")):
         f.write(f"- `{path}`\n")

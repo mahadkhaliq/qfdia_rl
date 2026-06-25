@@ -121,6 +121,7 @@ def add_display_columns(df: pd.DataFrame) -> pd.DataFrame:
     df.loc[qgnn & df["variant"].eq("enhanced6_balacc"), "model_name"] = "QGNN-enh6-BA"
     residual = df["variant"].eq("z_plus_abs_a") & ~qgnn
     df.loc[residual, "model_name"] = df.loc[residual, "model_name"] + "+|a|"
+    df["model_family"] = df["model"].map(MODEL_NAMES).fillna(df["model"].astype(str))
     df["is_oracle"] = df["variant"].eq("z_plus_abs_a")
     df["system_label"] = df["dataset_name"] + " " + df["bus"].astype(str) + "-bus"
     df["system_key"] = df["dataset"].astype(str) + "_" + df["bus"].astype(str)
@@ -333,7 +334,9 @@ def plot_group_metric_summary(metrics: pd.DataFrame, out: Path, title: str, x_co
 def plot_group_learning(hist: pd.DataFrame, out: Path, title: str, label_col: str):
     hist = hist.sort_values(SORT_COLS + ["epoch"])
     panels = [("val_f1", "Validation F1"), ("val_auprc", "Validation AUPRC"), ("train_loss", "Train Loss")]
-    fig, axes = plt.subplots(1, 3, figsize=(14.5, 4.6))
+    n_series = max(1, hist[label_col].nunique())
+    fig_height = 5.3 if n_series <= 4 else 6.3
+    fig, axes = plt.subplots(1, 3, figsize=(15.8, fig_height), constrained_layout=True)
     for ax, (col, panel_title) in zip(axes, panels):
         if col not in hist.columns:
             ax.axis("off")
@@ -347,9 +350,9 @@ def plot_group_learning(hist: pd.DataFrame, out: Path, title: str, label_col: st
     axes[0].set_ylim(0, 1.05)
     axes[1].set_ylim(0, 1.05)
     axes[0].set_ylabel("score")
-    axes[-1].legend(fontsize=8, loc="best")
+    handles, labels = axes[-1].get_legend_handles_labels()
+    fig.legend(handles, labels, fontsize=7, loc="center left", ncol=1, bbox_to_anchor=(1.0, 0.5))
     fig.suptitle(title, y=1.02)
-    fig.tight_layout()
     fig.savefig(out, dpi=180, bbox_inches="tight")
     plt.close(fig)
 
@@ -357,8 +360,10 @@ def plot_group_learning(hist: pd.DataFrame, out: Path, title: str, label_col: st
 def plot_grouped_views(metrics: pd.DataFrame, hist: pd.DataFrame, out_dir: Path):
     by_system = out_dir / "by_system"
     by_bus = out_dir / "by_bus"
+    by_bus_model = out_dir / "by_bus_model"
     by_system.mkdir(parents=True, exist_ok=True)
     by_bus.mkdir(parents=True, exist_ok=True)
+    by_bus_model.mkdir(parents=True, exist_ok=True)
 
     for system_key, grp in metrics.groupby("system_key", sort=False):
         label = str(grp["system_label"].iloc[0])
@@ -375,6 +380,15 @@ def plot_grouped_views(metrics: pd.DataFrame, hist: pd.DataFrame, out_dir: Path)
         hist_grp = hist[hist["bus"].eq(bus)]
         if not hist_grp.empty:
             plot_group_learning(hist_grp, by_bus / f"{stem}_learning.png", title, "plot_label")
+
+    for (bus, model), grp in metrics.groupby(["bus", "model"], sort=True):
+        family = str(grp["model_family"].iloc[0])
+        title = f"IEEE {bus}-bus: {family}"
+        stem = f"{bus}_bus_{slugify(str(model))}"
+        plot_group_metric_summary(grp, by_bus_model / f"{stem}_metrics.png", title, "plot_label")
+        hist_grp = hist[hist["bus"].eq(bus) & hist["model"].eq(model)]
+        if not hist_grp.empty:
+            plot_group_learning(hist_grp, by_bus_model / f"{stem}_learning.png", title, "plot_label")
 
 
 def ordered_system_labels(metrics: pd.DataFrame) -> list[str]:

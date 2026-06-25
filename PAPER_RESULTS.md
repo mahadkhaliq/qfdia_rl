@@ -146,6 +146,7 @@ These rows report post-hoc threshold choices on saved QGNN test probabilities fo
 - `paper_tables/detector_metrics_complete.csv`
 - `paper_tables/detector_metrics_deployable.csv`
 - `paper_tables/detector_metrics_oracle_ablations.csv`
+- `paper_tables/quantum_verification_results.csv`
 
 ## Figure Index
 
@@ -174,6 +175,41 @@ These rows report post-hoc threshold choices on saved QGNN test probabilities fo
 - `runs/plots/by_bus/30_bus_metrics.png`
 - `runs/plots/by_bus/57_bus_learning.png`
 - `runs/plots/by_bus/57_bus_metrics.png`
+
+### Per-Bus / Per-Method Figures
+
+- `runs/plots/by_bus_model/118_bus_cnn1d_learning.png`
+- `runs/plots/by_bus_model/118_bus_cnn1d_metrics.png`
+- `runs/plots/by_bus_model/118_bus_gat_learning.png`
+- `runs/plots/by_bus_model/118_bus_gat_metrics.png`
+- `runs/plots/by_bus_model/118_bus_gcn_learning.png`
+- `runs/plots/by_bus_model/118_bus_gcn_metrics.png`
+- `runs/plots/by_bus_model/118_bus_mlp_learning.png`
+- `runs/plots/by_bus_model/118_bus_mlp_metrics.png`
+- `runs/plots/by_bus_model/118_bus_wgcn_learning.png`
+- `runs/plots/by_bus_model/118_bus_wgcn_metrics.png`
+- `runs/plots/by_bus_model/30_bus_cnn1d_learning.png`
+- `runs/plots/by_bus_model/30_bus_cnn1d_metrics.png`
+- `runs/plots/by_bus_model/30_bus_gat_learning.png`
+- `runs/plots/by_bus_model/30_bus_gat_metrics.png`
+- `runs/plots/by_bus_model/30_bus_gcn_learning.png`
+- `runs/plots/by_bus_model/30_bus_gcn_metrics.png`
+- `runs/plots/by_bus_model/30_bus_mlp_learning.png`
+- `runs/plots/by_bus_model/30_bus_mlp_metrics.png`
+- `runs/plots/by_bus_model/30_bus_qgnn_learning.png`
+- `runs/plots/by_bus_model/30_bus_qgnn_metrics.png`
+- `runs/plots/by_bus_model/30_bus_wgcn_learning.png`
+- `runs/plots/by_bus_model/30_bus_wgcn_metrics.png`
+- `runs/plots/by_bus_model/57_bus_cnn1d_learning.png`
+- `runs/plots/by_bus_model/57_bus_cnn1d_metrics.png`
+- `runs/plots/by_bus_model/57_bus_gat_learning.png`
+- `runs/plots/by_bus_model/57_bus_gat_metrics.png`
+- `runs/plots/by_bus_model/57_bus_gcn_learning.png`
+- `runs/plots/by_bus_model/57_bus_gcn_metrics.png`
+- `runs/plots/by_bus_model/57_bus_mlp_learning.png`
+- `runs/plots/by_bus_model/57_bus_mlp_metrics.png`
+- `runs/plots/by_bus_model/57_bus_wgcn_learning.png`
+- `runs/plots/by_bus_model/57_bus_wgcn_metrics.png`
 
 ### Per-System Figures
 
