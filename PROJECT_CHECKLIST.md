@@ -37,9 +37,10 @@ This checklist keeps the detector-comparison track and the quantum RL/IBM track 
   - classical head for binary FDIA detection.
 - [x] Start with small/reduced graphs before attempting 30/57/118 full systems.
 - [x] Compare QGNN-style detector against CNN, MLP, GCN, and GAT using the same metrics.
-- [ ] Scale QGNN experiments beyond the 4-qubit/2k-sample pilot.
+- [x] Scale QGNN experiments beyond the 4-qubit/2k-sample pilot.
 - [x] Add QGNN threshold calibration because the first Ruan pilot is recall-heavy and over-flags.
-- [ ] Improve QGNN reduced-node selection/features for Ruan, where calibration still over-flags.
+- [x] Improve QGNN reduced-node selection/features for Ruan, where calibration still over-flags.
+- [ ] Improve enhanced 6-qubit QGNN recall on Ruan without reintroducing high false positives.
 
 ## 5. Quantum RL / IBM Quantum Track
 
