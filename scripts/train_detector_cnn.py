@@ -161,6 +161,9 @@ def evaluate(model, loader, device):
 def train(cfg: RunConfig, out_dir: Path):
     np.random.seed(cfg.seed)
     torch.manual_seed(cfg.seed)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    with open(out_dir / "config.json", "w") as f:
+        json.dump(asdict(cfg), f, indent=2)
     print(f"loading {cfg.data}", flush=True)
     x, y = load_qgrid(Path(cfg.data), cfg.max_samples, cfg.feature_mode, cfg.seed)
     print(f"loaded x={x.shape} y={y.shape} positives={int(y.sum())}", flush=True)
@@ -206,6 +209,7 @@ def train(cfg: RunConfig, out_dir: Path):
     best_state = None
     best_val = -1.0
     history = []
+    history_path = out_dir / "history.csv"
     for epoch in range(1, cfg.epochs + 1):
         model.train()
         losses = []
@@ -219,6 +223,10 @@ def train(cfg: RunConfig, out_dir: Path):
         val = evaluate(model, val_loader, device)
         rec = {"epoch": epoch, "train_loss": float(np.mean(losses)), **{f"val_{k}": v for k, v in val.items()}}
         history.append(rec)
+        with open(history_path, "w", newline="") as f:
+            writer = csv.DictWriter(f, fieldnames=list(history[0].keys()))
+            writer.writeheader()
+            writer.writerows(history)
         if val["f1"] > best_val:
             best_val = val["f1"]
             best_state = {k: v.detach().cpu().clone() for k, v in model.state_dict().items()}
@@ -231,13 +239,8 @@ def train(cfg: RunConfig, out_dir: Path):
     if best_state is not None:
         model.load_state_dict(best_state)
     test = evaluate(model, test_loader, device)
-    out_dir.mkdir(parents=True, exist_ok=True)
     with open(out_dir / "config.json", "w") as f:
         json.dump({**asdict(cfg), "input_dim": int(x.shape[1]), "device": str(device)}, f, indent=2)
-    with open(out_dir / "history.csv", "w", newline="") as f:
-        writer = csv.DictWriter(f, fieldnames=list(history[0].keys()))
-        writer.writeheader()
-        writer.writerows(history)
     with open(out_dir / "metrics.json", "w") as f:
         json.dump(test, f, indent=2)
     torch.save({"model": model.state_dict(), "scaler_mean": scaler.mean_, "scaler_scale": scaler.scale_}, out_dir / "model.pt")
