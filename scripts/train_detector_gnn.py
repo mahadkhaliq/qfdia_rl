@@ -54,6 +54,7 @@ class RunConfig:
     val_size: float
     feature_mode: str
     adjacency: str
+    adjacency_mode: str
 
 
 def _stack_list_column(table, name: str) -> np.ndarray:
@@ -97,8 +98,18 @@ def ruan_ybus(bus: int, adjacency_path: str) -> np.ndarray:
     return np.asarray(mat["G"], dtype=float) + 1j * np.asarray(mat["B"], dtype=float)
 
 
-def normalized_adjacency(ybus: np.ndarray) -> np.ndarray:
-    adj = (np.abs(ybus) > 1e-12).astype(np.float32)
+def normalized_adjacency(ybus: np.ndarray, mode: str = "binary") -> np.ndarray:
+    mag = np.abs(ybus).astype(np.float32)
+    if mode == "binary":
+        adj = (mag > 1e-12).astype(np.float32)
+    elif mode == "weighted":
+        adj = mag.copy()
+        nonzero = adj[adj > 1e-12]
+        if nonzero.size:
+            adj = adj / float(nonzero.max())
+        adj[adj <= 1e-12] = 0.0
+    else:
+        raise ValueError(f"unknown adjacency mode {mode}")
     np.fill_diagonal(adj, 0.0)
     adj = adj + np.eye(adj.shape[0], dtype=np.float32)
     deg = adj.sum(axis=1)
@@ -114,7 +125,7 @@ def load_adjacency(cfg: RunConfig) -> tuple[np.ndarray, int]:
     else:
         raise ValueError(f"unknown dataset {cfg.dataset}")
     edge_count = int(np.count_nonzero(np.triu((np.abs(ybus) > 1e-12), k=1)))
-    return normalized_adjacency(ybus), edge_count
+    return normalized_adjacency(ybus, cfg.adjacency_mode), edge_count
 
 
 class GraphConv(nn.Module):
@@ -223,7 +234,7 @@ class GATDetector(nn.Module):
 
 
 def make_model(name: str, feature_dim: int) -> nn.Module:
-    if name == "gcn":
+    if name in {"gcn", "wgcn"}:
         return GCNDetector(feature_dim)
     if name == "gat":
         return GATDetector(feature_dim)
@@ -245,6 +256,7 @@ def write_architecture_summary(model: nn.Module, cfg: RunConfig, feature_dim: in
         "edges": int(edges),
         "node_feature_dim": int(feature_dim),
         "feature_mode": cfg.feature_mode,
+        "adjacency_mode": cfg.adjacency_mode,
         **parameter_counts(model),
         "architecture": repr(model),
     }
@@ -259,6 +271,7 @@ def write_architecture_summary(model: nn.Module, cfg: RunConfig, feature_dim: in
             "edges",
             "node_feature_dim",
             "feature_mode",
+            "adjacency_mode",
             "total_parameters",
             "trainable_parameters",
         ]:
@@ -430,7 +443,7 @@ def main():
     ap.add_argument("--data", required=True)
     ap.add_argument("--dataset", choices=["qgrid", "ruan"], required=True)
     ap.add_argument("--bus", type=int, required=True)
-    ap.add_argument("--model", choices=["gcn", "gat"], default="gcn")
+    ap.add_argument("--model", choices=["gcn", "wgcn", "gat"], default="gcn")
     ap.add_argument("--max-samples", type=int, default=50000)
     ap.add_argument("--batch-size", type=int, default=512)
     ap.add_argument("--epochs", type=int, default=10)
@@ -440,6 +453,7 @@ def main():
     ap.add_argument("--val-size", type=float, default=0.1)
     ap.add_argument("--feature-mode", choices=["z"], default="z")
     ap.add_argument("--adjacency", default="external/ruan_fdia")
+    ap.add_argument("--adjacency-mode", choices=["binary", "weighted"], default="binary")
     ap.add_argument("--out", default=None)
     args = ap.parse_args()
     cfg_args = vars(args).copy()

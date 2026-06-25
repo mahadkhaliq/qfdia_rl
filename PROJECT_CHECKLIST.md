@@ -8,7 +8,7 @@ This checklist keeps the detector-comparison track and the quantum RL/IBM track 
 - [x] Verify Ruan/STGDL public FDIA repository and bundled admittance matrices.
 - [x] Normalize Ruan CAISO 30/118 data into the shared detector Parquet schema.
 - [x] Keep QGrid-Synth and Ruan datasets separate in figures and tables.
-- [ ] Add a written dataset table with sample counts, feature dimensions, labels, and topology source.
+- [x] Add a written dataset table with sample counts, feature dimensions, labels, and topology source.
 
 ## 2. Classical Detector Baselines
 
