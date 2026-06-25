@@ -1,9 +1,13 @@
 #!/bin/bash
 #SBATCH --job-name=qfdia_cnn
+#SBATCH --partition=gpu
+#SBATCH --account=engineering
+#SBATCH --qos=normal
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=8
-#SBATCH --mem=32G
+#SBATCH --cpus-per-task=16
+#SBATCH --mem=64G
+#SBATCH --gres=gpu:A100:1
 #SBATCH --time=08:00:00
 #SBATCH --output=logs/cnn_%x_%j.out
 #SBATCH --error=logs/cnn_%x_%j.err

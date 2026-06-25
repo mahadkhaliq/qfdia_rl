@@ -178,7 +178,12 @@ def train(cfg: RunConfig, out_dir: Path):
     x_val = scaler.transform(x_val).astype(np.float32)
     x_test = scaler.transform(x_test).astype(np.float32)
 
-    device = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
+    if torch.cuda.is_available():
+        device = torch.device("cuda")
+    elif torch.backends.mps.is_available():
+        device = torch.device("mps")
+    else:
+        device = torch.device("cpu")
     print(f"training {cfg.model} on {device}", flush=True)
     model = make_model(cfg.model, x_train.shape[1]).to(device)
     opt = torch.optim.AdamW(model.parameters(), lr=cfg.lr, weight_decay=1e-4)
