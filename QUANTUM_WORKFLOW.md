@@ -27,6 +27,41 @@ IEEE 118-bus: 8 qubits, 4 layers, 96 VQC parameters
 
 Training uses simulator-based QNPG because the QFIM/natural-gradient loop requires many circuit evaluations. IBM hardware should be used first for inference/noise verification of trained policies.
 
+## IBM-Compatible Environment
+
+Keep training/detector work in the stable research environment, and use a clean environment for IBM hardware verification. This avoids dependency conflicts between the detector stack and the fast-moving Qiskit Runtime stack.
+
+On Hellbender:
+
+```bash
+cd ~/qfdia_rl_git
+bash scripts/setup_ibm_quantum_env.sh
+```
+
+Default environment name:
+
+```text
+qfdia_ibm_latest
+```
+
+To use a different name:
+
+```bash
+ENV_NAME=qfdia_ibm_2026 bash scripts/setup_ibm_quantum_env.sh
+```
+
+Check the active quantum stack:
+
+```bash
+conda run -n qfdia_ibm_latest python scripts/check_quantum_stack.py
+```
+
+This writes:
+
+```text
+runs/quantum_architectures/quantum_stack_versions.json
+```
+
 ## Generate Architecture Artifacts
 
 ```bash
@@ -88,7 +123,7 @@ python verify_ibm.py \
 IBM hardware check:
 
 ```bash
-python verify_ibm.py \
+conda run -n qfdia_ibm_latest python verify_ibm.py \
   --bus 30 \
   --load outputs/qnpg_30_policy.npz \
   --device ibm \
@@ -99,6 +134,27 @@ python verify_ibm.py \
 ```
 
 Do not paste IBM API tokens into chat. Configure the IBM account in the shell/session using the IBM/Qiskit account mechanism, then run the command.
+
+Hellbender Slurm wrapper:
+
+```bash
+BUS=30 DEVICE=aer ENV_NAME=qfdia_ibm_latest sbatch scripts/run_ibm_verification_hellbender.sbatch
+BUS=30 DEVICE=aer_noisy ENV_NAME=qfdia_ibm_latest sbatch scripts/run_ibm_verification_hellbender.sbatch
+BUS=30 DEVICE=ibm IBM_BACKEND=<backend-name> ENV_NAME=qfdia_ibm_latest sbatch scripts/run_ibm_verification_hellbender.sbatch
+```
+
+The wrapper writes logs to:
+
+```text
+runs/logs/ibm_verify_<jobid>.out
+runs/logs/ibm_verify_<jobid>.err
+```
+
+and metrics to:
+
+```text
+runs/quantum_architectures/verify_<device>_<bus>.json
+```
 
 ## QGNN Detector Direction
 
@@ -113,4 +169,3 @@ classical binary FDIA head
 ```
 
 The first target should be 4-8 qubits, matching the current Q-NPG bus presets. Compare against CNN, MLP, GCN, and GAT using the same detector metrics.
-
