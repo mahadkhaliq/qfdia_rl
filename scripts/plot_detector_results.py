@@ -68,7 +68,9 @@ def parse_run_name(path: Path):
         return {"dataset": "unknown", "bus": "unknown", "model": path.name, "variant": "run"}
     d = m.groupdict()
     variant = "full"
-    if "enhanced6" in path.name:
+    if "enhanced6_balacc" in path.name:
+        variant = "enhanced6_balacc"
+    elif "enhanced6" in path.name:
         variant = "enhanced6"
     elif "enhanced4" in path.name:
         variant = "enhanced4"
@@ -90,6 +92,7 @@ def add_display_columns(df: pd.DataFrame) -> pd.DataFrame:
     df.loc[qgnn & df["variant"].eq("calibrated"), "model_name"] = "QGNN-cal"
     df.loc[qgnn & df["variant"].eq("enhanced4"), "model_name"] = "QGNN-enh4"
     df.loc[qgnn & df["variant"].eq("enhanced6"), "model_name"] = "QGNN-enh6"
+    df.loc[qgnn & df["variant"].eq("enhanced6_balacc"), "model_name"] = "QGNN-enh6-BA"
     residual = df["variant"].eq("z_plus_abs_a") & ~qgnn
     df.loc[residual, "model_name"] = df.loc[residual, "model_name"] + "+|a|"
     df["system_label"] = df["dataset_name"] + " " + df["bus"].astype(str) + "-bus"
@@ -100,7 +103,15 @@ def add_display_columns(df: pd.DataFrame) -> pd.DataFrame:
         {"cnn1d": 0, "mlp": 1, "gcn": 2, "wgcn": 3, "gat": 4, "qgnn": 5}
     ).fillna(99)
     df["variant_order"] = df["variant"].map(
-        {"full": 0, "z_plus_abs_a": 1, "pilot": 2, "calibrated": 3, "enhanced4": 4, "enhanced6": 5}
+        {
+            "full": 0,
+            "z_plus_abs_a": 1,
+            "pilot": 2,
+            "calibrated": 3,
+            "enhanced4": 4,
+            "enhanced6": 5,
+            "enhanced6_balacc": 6,
+        }
     ).fillna(9)
     return df
 

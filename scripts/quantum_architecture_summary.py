@@ -86,6 +86,8 @@ def load_json(path: Path) -> dict:
 
 
 def qgnn_run_variant(run_name: str) -> str:
+    if "enhanced6_balacc" in run_name:
+        return "enhanced6_balacc"
     if "enhanced6" in run_name:
         return "enhanced6"
     if "enhanced4" in run_name:
