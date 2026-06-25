@@ -63,7 +63,7 @@ This checklist keeps the detector-comparison track and the quantum RL/IBM track 
 - [x] Add quantum stack checker and Hellbender verification Slurm wrapper.
 - [x] Add IBM Runtime account/backend preflight checker that does not expose API tokens.
 - [x] Add token-free IBM verification manifest with existing simulator/Aer/noisy results and planned hardware smoke-test command.
-- [x] Add token-free IBM verification manifest with planned backend command and safety gate.
+- [x] Add paper-ready quantum verification results table with completed simulator/Aer/noisy rows and planned IBM row.
 
 ## 6. Permissions / Operations
 

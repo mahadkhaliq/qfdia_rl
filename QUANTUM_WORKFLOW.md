@@ -109,6 +109,24 @@ IBM_VERIFICATION_MANIFEST.md
 
 The manifest records existing simulator/Aer/noisy-Aer verification, selected backend, exact Slurm command, expected output JSON, and the token-rotation safety gate.
 
+Export the paper-ready quantum verification table:
+
+```bash
+python scripts/export_quantum_verification_results.py
+```
+
+This writes:
+
+```text
+paper_tables/quantum_verification_results.csv
+QUANTUM_VERIFICATION_RESULTS.md
+```
+
+Before IBM hardware submission, the table should show completed `sim`, `aer`,
+and `aer_noisy` rows plus an `ibm` row with status
+`planned_after_token_rotation`. After the QPU job completes, rerun the exporter
+so the `ibm` row becomes a completed hardware result.
+
 ## Generate Architecture Artifacts
 
 ```bash

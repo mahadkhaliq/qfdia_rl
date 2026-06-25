@@ -91,6 +91,7 @@ Paper-writing summary:
 
 ```text
 PAPER_RESULTS.md
+QUANTUM_VERIFICATION_RESULTS.md
 paper_tables/*.csv
 ```
 

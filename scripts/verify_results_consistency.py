@@ -93,6 +93,27 @@ def verify_paper_plots(plots_root: Path, failures: list[str]):
     check(not missing, f"missing paper plots: {missing}", failures)
 
 
+def verify_quantum_verification_table(tables_dir: Path, failures: list[str]):
+    rows = read_csv(tables_dir / "quantum_verification_results.csv")
+    devices = {row["device"] for row in rows}
+    for device in ["sim", "aer", "aer_noisy", "ibm"]:
+        check(device in devices, f"quantum verification table missing {device} row", failures)
+
+    completed = {row["device"] for row in rows if row.get("status") == "complete"}
+    for device in ["sim", "aer", "aer_noisy"]:
+        check(device in completed, f"quantum verification table missing completed {device} verification", failures)
+
+    ibm_rows = [row for row in rows if row["device"] == "ibm"]
+    check(bool(ibm_rows), "quantum verification table missing IBM hardware row", failures)
+    if ibm_rows:
+        valid_status = {"complete", "planned_after_token_rotation"}
+        check(
+            ibm_rows[0].get("status") in valid_status,
+            f"IBM row has unexpected status {ibm_rows[0].get('status')}",
+            failures,
+        )
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--metrics", default="runs/plots/detector_metrics_summary.csv")
@@ -106,6 +127,7 @@ def main():
     metrics = verify_tables(Path(args.metrics), Path(args.tables_dir), failures)
     verify_qgnn_architectures(metrics, Path(args.detectors_root), Path(args.registry), failures)
     verify_paper_plots(Path(args.plots_root), failures)
+    verify_quantum_verification_table(Path(args.tables_dir), failures)
 
     if failures:
         print("results consistency check FAILED")
@@ -117,7 +139,7 @@ def main():
     print(
         "results consistency check passed: "
         f"{len(metrics)} detector rows, {qgnn_count} QGNN architecture-backed rows, "
-        f"{len(EXPECTED_PAPER_PLOTS)} paper plots"
+        f"{len(EXPECTED_PAPER_PLOTS)} paper plots, quantum verification table"
     )
 
 
