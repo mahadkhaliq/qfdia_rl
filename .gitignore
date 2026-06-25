@@ -1,0 +1,47 @@
+# macOS / editor noise
+.DS_Store
+.vscode/
+.idea/
+
+# Python caches and environments
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+env/
+
+# Large generated datasets and experiment outputs
+outputs/
+outputs_smoke/
+real_outputs/
+data/qgrid_synth/
+data/canonical/
+runs/detectors/
+runs/policies/
+logs/
+
+# External downloaded datasets/references
+external/ruan_fdia/
+external/datasets_map/
+
+# Model/checkpoint/data artifacts
+*.npz
+*.parquet
+*.pt
+*.pth
+*.ckpt
+*.h5
+*.mat
+*.zip
+*.tar
+*.tar.gz
+
+# Slurm and runtime logs
+slurm-*.out
+*.out
+*.err
+*.log
+
