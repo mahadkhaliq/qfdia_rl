@@ -26,7 +26,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 
-RUN_RE = re.compile(r"(?P<dataset>qgrid|ruan)(?P<bus>\d+)_?(?P<model>cnn1d|mlp|gcn|wgcn|gat).*")
+RUN_RE = re.compile(r"(?P<dataset>qgrid|ruan)(?P<bus>\d+)_?(?P<model>cnn1d|mlp|gcn|wgcn|gat|qgnn).*")
 DATASET_NAMES = {
     "qgrid": "QGrid-Synth",
     "ruan": "Ruan CAISO",
@@ -37,6 +37,7 @@ MODEL_NAMES = {
     "gcn": "GCN",
     "wgcn": "W-GCN",
     "gat": "GAT",
+    "qgnn": "QGNN",
 }
 METRIC_TITLES = {
     "accuracy": "Accuracy",
@@ -71,7 +72,9 @@ def add_display_columns(df: pd.DataFrame) -> pd.DataFrame:
     df["system_label"] = df["dataset_name"] + " " + df["bus"].astype(str) + "-bus"
     df["plot_label"] = df["system_label"] + "\n" + df["model_name"]
     df["dataset_order"] = df["dataset"].map({"qgrid": 0, "ruan": 1}).fillna(99)
-    df["model_order"] = df["model"].map({"cnn1d": 0, "mlp": 1, "gcn": 2, "wgcn": 3, "gat": 4}).fillna(99)
+    df["model_order"] = df["model"].map(
+        {"cnn1d": 0, "mlp": 1, "gcn": 2, "wgcn": 3, "gat": 4, "qgnn": 5}
+    ).fillna(99)
     return df
 
 
