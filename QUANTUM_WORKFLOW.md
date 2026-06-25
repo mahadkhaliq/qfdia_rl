@@ -31,6 +31,18 @@ Training uses simulator-based QNPG because the QFIM/natural-gradient loop requir
 
 Keep training/detector work in the stable research environment, and use a clean environment for IBM hardware verification. This avoids dependency conflicts between the detector stack and the fast-moving Qiskit Runtime stack.
 
+The current Hellbender research environment can import the IBM-facing stack:
+
+```text
+pennylane: 0.42.3
+pennylane-qiskit: 0.42.0
+qiskit: 2.4.1
+qiskit-aer: 0.17.2
+qiskit-ibm-runtime: 0.47.0
+```
+
+That is suitable for simulator, Aer, noisy-Aer, and small PennyLane/Qiskit experiments. For real IBM hardware, prefer the clean `qfdia_ibm_latest` environment and keep hardware runs as inference/verification jobs. If the PennyLane plugin and the newest Qiskit Runtime release diverge, use `verify_ibm.py` through direct Qiskit Runtime first, then bring the result back into the shared JSON/plot workflow.
+
 On Hellbender:
 
 ```bash
@@ -158,14 +170,25 @@ runs/quantum_architectures/verify_<device>_<bus>.json
 
 ## QGNN Detector Direction
 
-The next detector-side quantum architecture should be reduced and IBM-feasible:
+The detector-side quantum architecture is implemented first as a reduced, IBM-feasible pilot:
 
 ```text
 graph node features -> reduced q-qubit feature vector
 RY/RZ encoding
-edge-inspired entanglers or compressed VQC block
+edge-inspired entanglers over the reduced topology
 PauliZ readout
 classical binary FDIA head
 ```
 
-The first target should be 4-8 qubits, matching the current Q-NPG bus presets. Compare against CNN, MLP, GCN, and GAT using the same detector metrics.
+The first completed pilot uses:
+
+```text
+datasets: QGrid-Synth 30-bus and Ruan CAISO 30-bus
+samples: 2,000 per dataset
+qubits: 4
+quantum layers: 2
+selected nodes: [3, 5, 9, 11]
+reduced edges: [(0, 1), (0, 3), (1, 2)]
+```
+
+Compare QGNN against CNN, MLP, GCN, W-GCN, and GAT using the same detector metrics. Treat this as a proof of equivalent quantum detector architecture first; performance tuning should come after threshold calibration and richer reduced-node selection.

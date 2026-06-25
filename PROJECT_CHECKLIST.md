@@ -28,14 +28,16 @@ This checklist keeps the detector-comparison track and the quantum RL/IBM track 
 
 ## 4. QGNN Detector Track
 
-- [ ] Define a reduced quantum graph detector architecture that can run on simulator and IBM hardware.
-- [ ] Map classical GCN/GAT concepts to a quantum architecture:
+- [x] Define a reduced quantum graph detector architecture that can run on simulator and IBM hardware.
+- [x] Map classical GCN/GAT concepts to a quantum architecture:
   - node feature encoding via angle/amplitude encoding,
   - graph edges via entangling gates over physical topology or reduced topology,
   - graph readout via Pauli expectation pooling,
   - classical head for binary FDIA detection.
-- [ ] Start with small/reduced graphs before attempting 30/57/118 full systems.
-- [ ] Compare QGNN-style detector against CNN, MLP, GCN, and GAT using the same metrics.
+- [x] Start with small/reduced graphs before attempting 30/57/118 full systems.
+- [x] Compare QGNN-style detector against CNN, MLP, GCN, and GAT using the same metrics.
+- [ ] Scale QGNN experiments beyond the 4-qubit/2k-sample pilot.
+- [ ] Add QGNN threshold calibration because the first Ruan pilot is recall-heavy and over-flags.
 
 ## 5. Quantum RL / IBM Quantum Track
 
