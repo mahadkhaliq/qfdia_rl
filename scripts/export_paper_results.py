@@ -286,8 +286,9 @@ def write_sds_ceiling_table(f, tables_dir: Path):
 
 def write_approx_h_tables(f, tables_dir: Path):
     diagnostic_paths = sorted(tables_dir.glob("approx_h_diagnostic_*_bus.csv"))
+    ablation_paths = sorted(tables_dir.glob("approx_h_ablation_*_bus.csv"))
     robustness_path = tables_dir / "sds_ceiling_approx_h_robustness.csv"
-    if not diagnostic_paths and not robustness_path.exists():
+    if not diagnostic_paths and not ablation_paths and not robustness_path.exists():
         return
 
     f.write("## Approximate-H Diagnostics\n\n")
@@ -304,6 +305,22 @@ def write_approx_h_tables(f, tables_dir: Path):
                 f"| {int(float(row['bus']))} | {fmt(row['rel_h'], digits=3)} | {fmt(row['mean_sds'])} | "
                 f"{fmt(row['fixed_evasion_rate'])} | {fmt(row['approx_h_evasion_rate'])} | "
                 f"{fmt(row['evasion_drop_points'], digits=1)} | {fmt(row['approx_h_median_chi2_over_tau'], digits=3)} |\n"
+            )
+        f.write("\n")
+
+    if ablation_paths:
+        f.write("Approximate-H training ablation. This compares the physics-Fisher term disabled (`mu=0`) and enabled (`mu>0`) under detector-Jacobian drift.\n\n")
+        columns = ["Bus", "relH", "mu", "Seed", "Updates", "Mean SDS", "Approx-H Evasion", "Drop Points", "Phys Trace"]
+        f.write(table_header(columns))
+        rows = []
+        for path in ablation_paths:
+            rows.extend(read_rows(path))
+        for row in sorted(rows, key=lambda r: (int(float(r["bus"])), float(r["mu_phys"]), int(float(r["seed"])))):
+            f.write(
+                f"| {int(float(row['bus']))} | {fmt(row['rel_h'], digits=3)} | {fmt(row['mu_phys'], digits=3)} | "
+                f"{int(float(row['seed']))} | {int(float(row['updates']))} | {fmt(row['mean_sds'])} | "
+                f"{fmt(row['approx_h_evasion_rate'])} | {fmt(row['evasion_drop_points'], digits=1)} | "
+                f"{fmt(row['train_final_phys_trace'])} |\n"
             )
         f.write("\n")
 

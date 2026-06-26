@@ -69,6 +69,7 @@ This checklist keeps the detector-comparison track and the quantum RL/IBM track 
 - [x] Compute analytical stealth max-SDS ceilings for IEEE 30/57/118 and log learned/ceiling ratios.
 - [x] Record QCRL paper hyperparameters, critic parameter counts, baseline-label count, and limitation replacement wording.
 - [x] Add approximate-H diagnostics for C1 and log fixed-H versus perturbed-H evasion.
+- [ ] Run 30-bus approximate-H `mu=0` versus `mu=1` training ablation through Slurm.
 
 ## 6. Permissions / Operations
 

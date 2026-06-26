@@ -79,3 +79,19 @@ The strong C1 diagnostic is implemented in `scripts/approx_h_ablation.py`. It ro
 Interpretation: the approximate-H mechanism is clearly active on 30-bus and mildly active on 57-bus at 2% model error, but not active on 118-bus at the learned policy's lower SDS. This supports the honest limitation: the fixed-H reported runs do not validate the residual-sensitivity term, but approximate-H regimes can create the off-manifold pressure that term is designed to handle.
 
 The ceiling-direction robustness sweep is logged in `paper_tables/sds_ceiling_approx_h_robustness.csv`. It shows that full analytical-ceiling attacks become non-evasive at 0.5% H drift on all grids, while learned-magnitude scaled attacks are more robust, especially on 57/118-bus.
+
+## Pending Strong C1/C2 Ablation
+
+The diagnostic tables do not yet prove that the physics term finds a more robust direction; they show that approximate-H pressure exists. The decisive experiment is now wired in `scripts/approx_h_ablation.py --ablate` and should be run through Slurm, not on the Hellbender login node:
+
+```bash
+sbatch scripts/run_approx_h_ablation_hellbender.sbatch
+```
+
+Default wrapper settings: IEEE 30-bus, `relH=0.02`, `mu in {0,1}`, seeds `0 1 2`, 80 updates, 256 transitions/update, and evaluation scales `0.5 0.75 1.0`. To run a quick single-seed pass:
+
+```bash
+SEEDS="0" UPDATES=40 sbatch scripts/run_approx_h_ablation_hellbender.sbatch
+```
+
+The result to look for: at matched or very similar SDS under H drift, `mu=1` should retain higher approximate-H evasion than `mu=0`. If it does, write a robustness-result paragraph. If it does not, keep the current contribution tag and report this as a limitation/tradeoff characterization.
