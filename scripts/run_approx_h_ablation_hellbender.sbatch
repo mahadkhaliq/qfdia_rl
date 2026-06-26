@@ -12,7 +12,15 @@ set -euo pipefail
 cd "${SLURM_SUBMIT_DIR}"
 mkdir -p slurm_logs paper_tables runs/approx_h_ablation
 
-source ~/miniconda3/etc/profile.d/conda.sh 2>/dev/null || source ~/.bashrc
+set +u
+if [ -f "$HOME/miniconda3/etc/profile.d/conda.sh" ]; then
+  source "$HOME/miniconda3/etc/profile.d/conda.sh"
+elif [ -f "$HOME/anaconda3/etc/profile.d/conda.sh" ]; then
+  source "$HOME/anaconda3/etc/profile.d/conda.sh"
+else
+  eval "$(conda shell.bash hook)"
+fi
+set -u
 conda activate qfdia
 
 BUS="${BUS:-30}"
