@@ -1,0 +1,3 @@
+bus,rel_h,mu_phys,seed,updates,mean_sds,fixed_evasion_rate,approx_h_evasion_rate,evasion_drop_points,approx_h_median_chi2_over_tau,train_final_asr,train_final_sds,train_final_stealth,train_final_phys_trace,run_dir
+30,0.02,0.0,0,40,0.016000328318486332,1.0,1.0,0.0,0.12213744018233887,0.875,0.02811860921266157,0.19069758459806005,0.005036076896284645,runs/approx_h_ablation/approx_h_bus30_rel0.020_mu0_seed0
+30,0.02,1.0,0,40,0.016257767923350246,1.0,1.0,0.0,0.08498589562683359,0.84375,0.026815421389880783,0.1973272425318306,0.0053597863129930985,runs/approx_h_ablation/approx_h_bus30_rel0.020_mu1_seed0

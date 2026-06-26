@@ -32,6 +32,18 @@ The critic is a one-hidden-layer MLP: `obs_dim -> 64 -> 1` with tanh activation.
 | 57 | 231 | 228 | 6 | 4 | 72 | 14913 | 1386 | 1596 | 228 | 18195 |
 | 118 | 475 | 472 | 8 | 4 | 96 | 30529 | 3800 | 4248 | 472 | 39145 |
 
+## IBM Quantum Hardware Smoke Verification
+
+Generated from `verify_ibm.py` hardware jobs on Hellbender/IBM Runtime and summarized in `QUANTUM_VERIFICATION_RESULTS.md` and `paper_tables/quantum_verification_results.csv`.
+
+| Bus | Backend | Qubits | VQC layers | Points | Shots | Device stealth | Device SDS | Flagged | Mean attack delta | Verdict |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 30 | ibm_miami | 4 | 3 | 4 | 1024 | 0.9942 | 0.0691 | 0.0000 | 0.0018 | survives_device |
+| 57 | ibm_miami | 6 | 4 | 2 | 1024 | 0.9984 | 0.0307 | 0.0000 | 0.0018 | survives_device |
+| 118 | ibm_miami | 8 | 4 | 1 | 1024 | 0.9987 | 0.0110 | 0.0000 | 0.0005 | survives_device |
+
+Interpretation: these are small real-hardware smoke checks, not full statistical hardware validation. They support the limited claim that the trained Q-NPG VQC actor can be executed through IBM hardware on the 30-, 57-, and 118-bus policies while preserving BDD stealth and nonzero attack impact at the sampled operating points.
+
 ## QGrid-Synth Attack Labels
 
 There are five non-learned baseline attack families in the current QGrid-Synth generator:

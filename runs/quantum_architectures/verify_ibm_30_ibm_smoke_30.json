@@ -1,0 +1,37 @@
+{
+  "timestamp_unix": 1782456271.7880685,
+  "bus": 30,
+  "policy": "runs/policies/qnpg_30_policy.npz",
+  "device": "ibm",
+  "shots": 1024,
+  "n_points": 4,
+  "ibm_backend": "ibm_miami",
+  "fake_backend": null,
+  "n_qubits": 4,
+  "vqc_layers": 3,
+  "theta_parameters": 36,
+  "logical_depth": 2,
+  "logical_num_gates": 2,
+  "logical_gate_types": {
+    "AngleEmbedding": 1,
+    "StronglyEntanglingLayers": 1
+  },
+  "tau_bdd": 79.08194448784874,
+  "faithfulness_max_abs": null,
+  "simulator": {
+    "stealth": 0.9930548361113629,
+    "sds": 0.07490263753852755,
+    "flagged_rate": 0.0,
+    "residual_mean": 0.5492370651002145,
+    "residual_std": 0.055710283575033624
+  },
+  "device_result": {
+    "stealth": 0.9941618925360636,
+    "sds": 0.06908387023894855,
+    "flagged_rate": 0.0,
+    "residual_mean": 0.46168889037711425,
+    "residual_std": 0.06585325791909008,
+    "mean_abs_attack_delta": 0.001834885638367837
+  },
+  "verdict": "survives_device"
+}

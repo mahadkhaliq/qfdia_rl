@@ -102,7 +102,38 @@ def collect_completed_rows(root: Path, bus: int | None) -> list[dict]:
         if bus is not None and int(payload.get("bus", -1)) != bus:
             continue
         rows.append(row_from_verification(path))
-    return sorted(rows, key=verification_sort_key)
+    return sorted(deduplicate_latest_aliases(rows), key=verification_sort_key)
+
+
+def deduplicate_latest_aliases(rows: list[dict]) -> list[dict]:
+    """Prefer tagged verification JSONs over latest aliases for identical runs."""
+    groups: dict[tuple, list[dict]] = {}
+    for row in rows:
+        key = (
+            row.get("device"),
+            str(row.get("bus")),
+            row.get("backend") or "",
+            row.get("shots"),
+            row.get("n_points"),
+            row.get("verdict") or "",
+            row.get("device_stealth"),
+            row.get("device_sds"),
+            row.get("device_flagged_rate"),
+            row.get("mean_abs_attack_delta"),
+        )
+        groups.setdefault(key, []).append(row)
+
+    selected = []
+    for group in groups.values():
+        if len(group) == 1:
+            selected.append(group[0])
+            continue
+        tagged = [
+            row for row in group
+            if not Path(str(row.get("json_path", ""))).stem.endswith(f"_{row.get('bus')}")
+        ]
+        selected.append(sorted(tagged or group, key=lambda r: str(r.get("json_path")))[-1])
+    return selected
 
 
 def baseline_circuit_row(rows: list[dict], bus: int) -> dict:
@@ -114,6 +145,8 @@ def baseline_circuit_row(rows: list[dict], bus: int) -> dict:
 
 
 def default_planned_hardware_run(args) -> dict:
+    if args.bus is None:
+        return {}
     return {
         "bus": args.bus,
         "ibm_backend": args.backend,
@@ -130,6 +163,8 @@ def planned_ibm_row(manifest_path: Path, rows: list[dict], default_plan: dict) -
     planned = default_plan.copy()
     if manifest:
         planned.update({k: v for k, v in manifest.get("planned_hardware_run", {}).items() if v not in (None, "")})
+    if not planned.get("bus"):
+        return None
     bus = planned.get("bus")
     expected_json = planned.get("expected_json")
     has_complete_ibm = any(
@@ -193,15 +228,21 @@ def write_markdown(path: Path, rows: list[dict], manifest_path: Path):
             )
         handle.write("\n## Notes\n\n")
         handle.write("- `sim`, `aer`, and `aer_noisy` rows are completed non-hardware checks of the trained Q-NPG VQC actor.\n")
-        handle.write("- The `ibm` row remains planned until the IBM API key has been rotated/reconfirmed and the hardware smoke job has completed.\n")
-        handle.write("- The planned hardware smoke run is intentionally small: one circuit evaluation per operating point, with the listed shot count.\n")
+        ibm_complete_count = sum(1 for row in rows if row.get("device") == "ibm" and row.get("status") == "complete")
+        if ibm_complete_count > 1:
+            handle.write("- The `ibm` rows are completed real-hardware smoke verifications of the trained Q-NPG VQC actor.\n")
+        elif ibm_complete_count == 1:
+            handle.write("- The `ibm` row is a completed real-hardware smoke verification of the trained Q-NPG VQC actor.\n")
+        else:
+            handle.write("- The `ibm` row remains planned until the IBM API key has been rotated/reconfirmed and the hardware smoke job has completed.\n")
+        handle.write("- The hardware smoke run is intentionally small: one circuit evaluation per operating point, with the listed shot count.\n")
         handle.write(f"- Hardware safety gate and exact command are recorded in `{manifest_path}`.\n")
 
 
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--root", default="runs/quantum_architectures")
-    ap.add_argument("--bus", type=int, default=30)
+    ap.add_argument("--bus", type=int, default=None, help="Filter to one bus; default exports all completed buses.")
     ap.add_argument("--manifest", default="runs/quantum_architectures/ibm_verification_manifest.json")
     ap.add_argument("--backend", default="ibm_fez")
     ap.add_argument("--policy", default=None)

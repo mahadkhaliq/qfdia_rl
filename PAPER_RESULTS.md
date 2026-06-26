@@ -157,6 +157,13 @@ Learned-policy evasion under a 2% detector-Jacobian perturbation, using saved Q-
 | 57 | 0.020 | 0.2160 | 1.0000 | 0.9344 | 6.6 | 0.816 |
 | 118 | 0.020 | 0.0729 | 1.0000 | 1.0000 | 0.0 | 0.202 |
 
+Approximate-H training ablation. This compares the physics-Fisher term disabled (`mu=0`) and enabled (`mu>0`) under detector-Jacobian drift.
+
+| Bus | relH | mu | Seed | Updates | Mean SDS | Approx-H Evasion | Drop Points | Phys Trace |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 30 | 0.020 | 0.000 | 0 | 80 | 0.0211 | 1.0000 | 0.0 | 0.0087 |
+| 30 | 0.020 | 1.000 | 0 | 80 | 0.0268 | 1.0000 | 0.0 | 0.0061 |
+
 Ceiling-direction robustness sweep. `scaled` uses the analytical ceiling direction scaled to the learned SDS magnitude.
 
 | Bus | relH | Ceiling Evasion | Ceiling Median Chi2/Tau | Scaled Evasion | Scaled Median Chi2/Tau |
@@ -179,6 +186,10 @@ Ceiling-direction robustness sweep. `scaled` uses the analytical ceiling directi
 
 ## Complete Table Files
 
+- `paper_tables/approx_h_ablation_30_bus.csv`
+- `paper_tables/approx_h_ablation_30_bus_quick40.csv`
+- `paper_tables/approx_h_ablation_30_bus_quick40_scaled.csv`
+- `paper_tables/approx_h_ablation_30_bus_scaled.csv`
 - `paper_tables/approx_h_diagnostic_118_bus.csv`
 - `paper_tables/approx_h_diagnostic_30_bus.csv`
 - `paper_tables/approx_h_diagnostic_57_bus.csv`
