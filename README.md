@@ -1,7 +1,5 @@
 # Q-NPG-FDIA — Quantum Natural Policy Gradient for FDIA generation
 
-**Your task (Mahad) within the QT-FDIA-RL team framework.**
-Target venue: IEEE QCE 2026, QML@QCE workshop.
 
 This package implements **Algorithm 4.1 (Q-NPG-FDIA)** from the Theoretical
 Framework: a variational quantum policy that *learns to generate stealthy,
