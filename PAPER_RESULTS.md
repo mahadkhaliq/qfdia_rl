@@ -147,8 +147,41 @@ These rows compare the learned Q-NPG-FDIA mean SDS against a direct max-SDS opti
 | 57 | 0.1800 | 1.9043 | 0.2167 | 0.1138 | 1.12e-23 | 139.921 |
 | 118 | 0.1200 | 1.7362 | 0.0722 | 0.0416 | 1.18e-22 | 272.836 |
 
+## Approximate-H Diagnostics
+
+Learned-policy evasion under a 2% detector-Jacobian perturbation, using saved Q-NPG policies.
+
+| Bus | relH | Mean SDS | Fixed-H Evasion | Approx-H Evasion | Drop Points | Approx Median Chi2/Tau |
+| --- | --- | --- | --- | --- | --- | --- |
+| 30 | 0.020 | 0.4680 | 1.0000 | 0.0000 | 100.0 | 5.689 |
+| 57 | 0.020 | 0.2160 | 1.0000 | 0.9344 | 6.6 | 0.816 |
+| 118 | 0.020 | 0.0729 | 1.0000 | 1.0000 | 0.0 | 0.202 |
+
+Ceiling-direction robustness sweep. `scaled` uses the analytical ceiling direction scaled to the learned SDS magnitude.
+
+| Bus | relH | Ceiling Evasion | Ceiling Median Chi2/Tau | Scaled Evasion | Scaled Median Chi2/Tau |
+| --- | --- | --- | --- | --- | --- |
+| 30 | 0.001 | 1.0000 | 0.405 | 1.0000 | 0.017 |
+| 30 | 0.005 | 0.0000 | 10.092 | 1.0000 | 0.413 |
+| 30 | 0.010 | 0.0000 | 38.940 | 0.0200 | 1.593 |
+| 30 | 0.020 | 0.0000 | 133.435 | 0.0000 | 5.460 |
+| 30 | 0.050 | 0.0000 | 393.011 | 0.0000 | 16.081 |
+| 57 | 0.001 | 1.0000 | 0.181 | 1.0000 | 0.002 |
+| 57 | 0.005 | 0.0000 | 4.381 | 1.0000 | 0.057 |
+| 57 | 0.010 | 0.0000 | 16.598 | 1.0000 | 0.215 |
+| 57 | 0.020 | 0.0000 | 57.176 | 1.0000 | 0.740 |
+| 57 | 0.050 | 0.0000 | 157.613 | 0.0000 | 2.040 |
+| 118 | 0.001 | 1.0000 | 0.510 | 1.0000 | 0.001 |
+| 118 | 0.005 | 0.0000 | 11.595 | 1.0000 | 0.020 |
+| 118 | 0.010 | 0.0000 | 36.436 | 1.0000 | 0.063 |
+| 118 | 0.020 | 0.0000 | 79.432 | 1.0000 | 0.137 |
+| 118 | 0.050 | 0.0000 | 115.067 | 1.0000 | 0.199 |
+
 ## Complete Table Files
 
+- `paper_tables/approx_h_diagnostic_118_bus.csv`
+- `paper_tables/approx_h_diagnostic_30_bus.csv`
+- `paper_tables/approx_h_diagnostic_57_bus.csv`
 - `paper_tables/best_deployable_by_system.csv`
 - `paper_tables/detector_metrics_118_bus.csv`
 - `paper_tables/detector_metrics_30_bus.csv`
@@ -157,6 +190,7 @@ These rows compare the learned Q-NPG-FDIA mean SDS against a direct max-SDS opti
 - `paper_tables/detector_metrics_deployable.csv`
 - `paper_tables/detector_metrics_oracle_ablations.csv`
 - `paper_tables/quantum_verification_results.csv`
+- `paper_tables/sds_ceiling_approx_h_robustness.csv`
 - `paper_tables/sds_ceiling_ratios.csv`
 
 ## Figure Index

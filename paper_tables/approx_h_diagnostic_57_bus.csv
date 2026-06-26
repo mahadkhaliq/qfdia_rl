@@ -1,0 +1,2 @@
+bus,rel_h,episodes,k_perturb,mean_sds,fixed_evasion_rate,approx_h_evasion_rate,evasion_drop_points,fixed_median_chi2_over_tau,approx_h_median_chi2_over_tau,tau_bdd,sigma
+57,0.02,32,10,0.21596404231264787,1.0,0.934375,6.562500000000004,0.077041413371314,0.8155361205925789,139.92077389845574,0.01

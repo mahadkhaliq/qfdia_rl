@@ -15,4 +15,11 @@ mkdir -p slurm_logs paper_tables
 source ~/miniconda3/etc/profile.d/conda.sh 2>/dev/null || source ~/.bashrc
 conda activate qfdia
 
-python scripts/max_sds_ceiling.py --all --restarts 40 --iters 25 --csv-out paper_tables/sds_ceiling_ratios.csv
+python scripts/max_sds_ceiling.py \
+  --all \
+  --restarts 40 \
+  --iters 25 \
+  --noise-check \
+  --noise-trials 200 \
+  --csv-out paper_tables/sds_ceiling_ratios.csv \
+  --robustness-csv-out paper_tables/sds_ceiling_approx_h_robustness.csv

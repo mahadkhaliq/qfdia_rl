@@ -45,7 +45,7 @@ When a trained Q-NPG policy is provided, `rl_learned` is appended as the learned
 Generated with:
 
 ```bash
-/opt/anaconda3/envs/qfdia/bin/python scripts/max_sds_ceiling.py --all --restarts 40 --iters 25 --csv-out paper_tables/sds_ceiling_ratios.csv
+/opt/anaconda3/envs/qfdia/bin/python scripts/max_sds_ceiling.py --all --restarts 40 --iters 25 --noise-check --noise-trials 200 --csv-out paper_tables/sds_ceiling_ratios.csv --robustness-csv-out paper_tables/sds_ceiling_approx_h_robustness.csv
 ```
 
 | Bus | a_max | SDS ceiling | learned SDS | learned/ceiling | stealth residual | tau_bdd |
@@ -61,3 +61,21 @@ Paper wording for the linearized-model limitation:
 Paper wording for the quantum-advantage sentence:
 
 > We treat the quantum policy as a parameter-efficient quantum natural-gradient architecture rather than as a demonstrated quantum advantage claim. A parameter-matched classical natural-policy-gradient policy remains the cleanest follow-up ablation for isolating the role of the variational quantum core.
+
+## C1 Status And Approximate-H Diagnostics
+
+The shared `paper_qcrl2026 (2).tex` already contains the deadline-safe C1 tag in contribution #2:
+
+> We propose and analyze this metric; in the regime studied it remained near-inactive, so its benefit is motivated by construction and left for empirical validation.
+
+The strong C1 diagnostic is implemented in `scripts/approx_h_ablation.py`. It rolls out saved trained policies and evaluates the same attacks under perturbed detector Jacobians. At `relH = 0.02`, with 32 rollouts and 10 perturbations per rollout:
+
+| Bus | mean SDS | fixed-H evasion | approximate-H evasion | evasion drop | approx median chi2/tau |
+| --- | --- | --- | --- | --- | --- |
+| 30 | 0.4680 | 1.000 | 0.000 | 100.0 points | 5.689 |
+| 57 | 0.2160 | 1.000 | 0.934 | 6.6 points | 0.816 |
+| 118 | 0.0729 | 1.000 | 1.000 | 0.0 points | 0.202 |
+
+Interpretation: the approximate-H mechanism is clearly active on 30-bus and mildly active on 57-bus at 2% model error, but not active on 118-bus at the learned policy's lower SDS. This supports the honest limitation: the fixed-H reported runs do not validate the residual-sensitivity term, but approximate-H regimes can create the off-manifold pressure that term is designed to handle.
+
+The ceiling-direction robustness sweep is logged in `paper_tables/sds_ceiling_approx_h_robustness.csv`. It shows that full analytical-ceiling attacks become non-evasive at 0.5% H drift on all grids, while learned-magnitude scaled attacks are more robust, especially on 57/118-bus.

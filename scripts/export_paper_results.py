@@ -284,6 +284,43 @@ def write_sds_ceiling_table(f, tables_dir: Path):
     f.write("\n")
 
 
+def write_approx_h_tables(f, tables_dir: Path):
+    diagnostic_paths = sorted(tables_dir.glob("approx_h_diagnostic_*_bus.csv"))
+    robustness_path = tables_dir / "sds_ceiling_approx_h_robustness.csv"
+    if not diagnostic_paths and not robustness_path.exists():
+        return
+
+    f.write("## Approximate-H Diagnostics\n\n")
+
+    if diagnostic_paths:
+        f.write("Learned-policy evasion under a 2% detector-Jacobian perturbation, using saved Q-NPG policies.\n\n")
+        columns = ["Bus", "relH", "Mean SDS", "Fixed-H Evasion", "Approx-H Evasion", "Drop Points", "Approx Median Chi2/Tau"]
+        f.write(table_header(columns))
+        rows = []
+        for path in diagnostic_paths:
+            rows.extend(read_rows(path))
+        for row in sorted(rows, key=lambda r: (int(float(r["bus"])), float(r["rel_h"]))):
+            f.write(
+                f"| {int(float(row['bus']))} | {fmt(row['rel_h'], digits=3)} | {fmt(row['mean_sds'])} | "
+                f"{fmt(row['fixed_evasion_rate'])} | {fmt(row['approx_h_evasion_rate'])} | "
+                f"{fmt(row['evasion_drop_points'], digits=1)} | {fmt(row['approx_h_median_chi2_over_tau'], digits=3)} |\n"
+            )
+        f.write("\n")
+
+    if robustness_path.exists():
+        f.write("Ceiling-direction robustness sweep. `scaled` uses the analytical ceiling direction scaled to the learned SDS magnitude.\n\n")
+        columns = ["Bus", "relH", "Ceiling Evasion", "Ceiling Median Chi2/Tau", "Scaled Evasion", "Scaled Median Chi2/Tau"]
+        f.write(table_header(columns))
+        rows = read_rows(robustness_path)
+        for row in sorted(rows, key=lambda r: (int(float(r["bus"])), float(r["rel_h"]))):
+            f.write(
+                f"| {int(float(row['bus']))} | {fmt(row['rel_h'], digits=3)} | "
+                f"{fmt(row['ceiling_evasion_rate'])} | {fmt(row['ceiling_median_chi2_over_tau'], digits=3)} | "
+                f"{fmt(row['scaled_evasion_rate'])} | {fmt(row['scaled_median_chi2_over_tau'], digits=3)} |\n"
+            )
+        f.write("\n")
+
+
 def write_metric_definitions(f):
     f.write("## Metric Definitions For Paper\n\n")
     f.write("- `+|a|` model labels denote QGrid-only oracle/residual-aware ablations using the synthetic attack vector magnitude.\n")
@@ -319,6 +356,7 @@ def main():
         write_overview_table(f, rows)
         write_qgnn_threshold_sweeps(f, Path(args.detectors_root))
         write_sds_ceiling_table(f, tables_dir)
+        write_approx_h_tables(f, tables_dir)
         write_table_index(f, tables_dir)
         write_figure_index(f, plots_root)
         write_metric_definitions(f)
