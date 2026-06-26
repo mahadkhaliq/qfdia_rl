@@ -21,7 +21,8 @@ else
   eval "$(conda shell.bash hook)"
 fi
 set -u
-conda activate qfdia
+CONDA_ENV="${CONDA_ENV:-synthgrad}"
+conda activate "${CONDA_ENV}"
 
 BUS="${BUS:-30}"
 REL="${REL:-0.02}"
