@@ -22,4 +22,5 @@ python scripts/export_quantum_verification_results.py
 - `sim`, `aer`, and `aer_noisy` rows are completed non-hardware checks of the trained Q-NPG VQC actor.
 - The `ibm` rows are completed real-hardware smoke verifications of the trained Q-NPG VQC actor.
 - The hardware smoke run is intentionally small: one circuit evaluation per operating point, with the listed shot count.
+- Hardware smoke plot: `runs/plots/paper/ibm_hardware_smoke.png`.
 - Hardware safety gate and exact command are recorded in `runs/quantum_architectures/ibm_verification_manifest.json`.

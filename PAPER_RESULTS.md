@@ -221,6 +221,7 @@ Ceiling-direction robustness sweep. `scaled` uses the analytical ceiling directi
 - `runs/plots/paper/f1_heatmap_with_oracle.png`
 - `runs/plots/paper/f1_ranked_by_system_deployable.png`
 - `runs/plots/paper/fpr_fnr_tradeoff_deployable.png`
+- `runs/plots/paper/ibm_hardware_smoke.png`
 - `runs/plots/paper/latency_deployable.png`
 
 ### Per-Bus Figures

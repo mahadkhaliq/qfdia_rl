@@ -9,6 +9,7 @@ mkdir -p "$MPLCONFIGDIR"
 cd "$PROJECT_ROOT"
 
 "$PYTHON_BIN" scripts/plot_detector_results.py --root runs/detectors --out-dir runs/plots
+"$PYTHON_BIN" scripts/plot_quantum_hardware_results.py
 "$PYTHON_BIN" scripts/export_paper_results.py
 "$PYTHON_BIN" scripts/export_quantum_verification_results.py
 "$PYTHON_BIN" scripts/verify_results_consistency.py
