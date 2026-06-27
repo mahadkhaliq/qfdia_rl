@@ -39,6 +39,10 @@ def main():
     ap.add_argument("--classical", action="store_true", help="use classical MLP policy baseline")
     ap.add_argument("--device", type=str, default="default.qubit")
     ap.add_argument("--updates", type=int, default=None)
+    ap.add_argument("--steps-per-update", type=int, default=None)
+    ap.add_argument("--qfim-batch", type=int, default=None)
+    ap.add_argument("--grad-batch", type=int, default=None)
+    ap.add_argument("--eval-episodes", type=int, default=None)
     ap.add_argument("--seed", type=int, default=42)
     ap.add_argument("--out", type=str, default="outputs")
     ap.add_argument("--eval-only", action="store_true", help="skip training; just evaluate (use with --load)")
@@ -53,6 +57,14 @@ def main():
         tc = quick_overrides(tc)
     if args.updates is not None:
         tc.total_updates = args.updates
+    if args.steps_per_update is not None:
+        tc.steps_per_update = args.steps_per_update
+    if args.qfim_batch is not None:
+        tc.qfim_batch = args.qfim_batch
+    if args.grad_batch is not None:
+        tc.grad_batch = args.grad_batch
+    if args.eval_episodes is not None:
+        tc.eval_episodes = args.eval_episodes
 
     print(f"\n{'='*64}\n  Q-NPG-FDIA  |  IEEE {args.bus}-bus  |  "
           f"{'CLASSICAL MLP' if args.classical else f'VQC ({bcfg.n_qubits}q, {bcfg.vqc_layers}L)'}"

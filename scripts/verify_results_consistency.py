@@ -131,6 +131,37 @@ def verify_quantum_verification_table(tables_dir: Path, failures: list[str]):
         )
 
 
+def verify_qnpg_seed_sweep_tables(tables_dir: Path, failures: list[str]):
+    raw_path = tables_dir / "qnpg_seed_sweep_raw.csv"
+    summary_path = tables_dir / "qnpg_seed_sweep_summary.csv"
+    if not raw_path.exists() and not summary_path.exists():
+        return
+    raw = read_csv(raw_path)
+    summary = read_csv(summary_path)
+    expected_buses = {"30", "57", "118"}
+    expected_methods = {
+        "Q-NPG-FDIA",
+        "liu_stealthy",
+        "step",
+        "random",
+        "multiplicative",
+        "coordinated_sparse",
+    }
+    check(len(raw) == 54, f"Q-NPG seed-sweep raw rows {len(raw)} != 54", failures)
+    check(len(summary) == 18, f"Q-NPG seed-sweep summary rows {len(summary)} != 18", failures)
+    check({row["bus"] for row in raw} == expected_buses, "Q-NPG seed-sweep raw table missing bus coverage", failures)
+    check({row["bus"] for row in summary} == expected_buses, "Q-NPG seed-sweep summary table missing bus coverage", failures)
+    check({row["method"] for row in summary} == expected_methods, "Q-NPG seed-sweep summary table missing methods", failures)
+    for bus in expected_buses:
+        bus_raw = [row for row in raw if row["bus"] == bus]
+        bus_summary = [row for row in summary if row["bus"] == bus]
+        check(len(bus_raw) == 18, f"Q-NPG seed-sweep raw table bus {bus} rows {len(bus_raw)} != 18", failures)
+        check(len(bus_summary) == 6, f"Q-NPG seed-sweep summary table bus {bus} rows {len(bus_summary)} != 6", failures)
+        for row in bus_summary:
+            check(row.get("n_seeds") == "3", f"Q-NPG seed-sweep bus {bus} {row.get('method')} n_seeds != 3", failures)
+            check(row.get("eval_n_per_seed") == "256", f"Q-NPG seed-sweep bus {bus} {row.get('method')} eval_n_per_seed != 256", failures)
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--metrics", default="runs/plots/detector_metrics_summary.csv")
@@ -145,6 +176,7 @@ def main():
     verify_qgnn_architectures(metrics, Path(args.detectors_root), Path(args.registry), failures)
     verify_paper_plots(Path(args.plots_root), failures)
     verify_quantum_verification_table(Path(args.tables_dir), failures)
+    verify_qnpg_seed_sweep_tables(Path(args.tables_dir), failures)
 
     if failures:
         print("results consistency check FAILED")
@@ -157,7 +189,7 @@ def main():
         "results consistency check passed: "
         f"{len(metrics)} detector rows, {qgnn_count} QGNN architecture-backed rows, "
         f"{len(EXPECTED_PAPER_PLOTS)} paper plots, {len(EXPECTED_30_BUS_METHOD_LEARNING)} 30-bus method plots, "
-        "quantum verification table"
+        "quantum verification table, Q-NPG seed-sweep tables"
     )
 
 

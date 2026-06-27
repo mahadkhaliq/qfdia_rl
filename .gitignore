@@ -23,6 +23,7 @@ data/canonical/
 runs/detectors/
 runs/policies/
 runs/plots/
+runs/qnpg_seed_sweep/
 runs/quantum_architectures/
 logs/
 
